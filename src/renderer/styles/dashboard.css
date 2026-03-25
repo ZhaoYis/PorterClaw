@@ -101,7 +101,7 @@ body {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   overflow-y: auto;
   min-height: 0;
 }
@@ -437,7 +437,7 @@ body {
 
   .main-content {
     padding: 16px;
-    gap: 12px;
+    gap: 16px;
   }
 
   .status-card {
