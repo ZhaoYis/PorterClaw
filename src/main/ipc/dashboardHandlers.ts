@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain } from 'electron';
 import { SystemStatus, ResourceMetrics } from '@common/types/dashboard';
 
 let currentStatus: SystemStatus = {
@@ -52,20 +52,3 @@ export function registerDashboardHandlers(): void {
   });
 }
 
-export function registerWindowHandlers(mainWindow: BrowserWindow): void {
-  ipcMain.handle('window:minimize', () => {
-    mainWindow.minimize();
-  });
-
-  ipcMain.handle('window:maximize', () => {
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow.maximize();
-    }
-  });
-
-  ipcMain.handle('window:close', () => {
-    mainWindow.close();
-  });
-}

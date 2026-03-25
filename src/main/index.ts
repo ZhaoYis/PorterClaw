@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
-import { registerDashboardHandlers, registerWindowHandlers } from './ipc/dashboardHandlers';
+import { registerDashboardHandlers } from './ipc/dashboardHandlers';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -8,10 +8,9 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 600,
-    minWidth: 900,
-    minHeight: 600,
-    titleBarStyle: 'hidden',
-    frame: false,
+    minWidth: 600,
+    minHeight: 400,
+    frame: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -25,7 +24,6 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  registerWindowHandlers(mainWindow);
 }
 
 app.whenReady().then(() => {

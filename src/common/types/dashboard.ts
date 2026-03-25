@@ -34,12 +34,6 @@ export interface DashboardActions {
 
 export type DashboardStore = DashboardState & DashboardActions;
 
-export interface WindowControlsAPI {
-  minimize: () => void;
-  maximize: () => void;
-  close: () => void;
-}
-
 export interface DashboardAPI {
   getStatus: () => Promise<SystemStatus>;
   getMetrics: () => Promise<ResourceMetrics>;
@@ -49,7 +43,6 @@ export interface DashboardAPI {
 
 export interface IElectronAPI {
   dashboard: DashboardAPI;
-  window: WindowControlsAPI;
 }
 
 declare global {

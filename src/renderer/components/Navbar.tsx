@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { WindowControls } from './WindowControls';
 
 interface NavItem {
   key: string;
@@ -37,7 +36,6 @@ export const Navbar: React.FC = React.memo(() => {
       <ul className="nav-menu">
         {menuItems}
       </ul>
-      <WindowControls />
     </nav>
   );
 });

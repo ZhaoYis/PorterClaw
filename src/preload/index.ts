@@ -8,19 +8,6 @@ const dashboardAPI = {
   restartService: (): Promise<void> => ipcRenderer.invoke('dashboard:restart'),
 };
 
-const windowAPI = {
-  minimize: (): void => {
-    ipcRenderer.invoke('window:minimize');
-  },
-  maximize: (): void => {
-    ipcRenderer.invoke('window:maximize');
-  },
-  close: (): void => {
-    ipcRenderer.invoke('window:close');
-  },
-};
-
 contextBridge.exposeInMainWorld('electron', {
   dashboard: dashboardAPI,
-  window: windowAPI,
 });
