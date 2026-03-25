@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PorterClaw - OpenClaw Management Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Main Window */
+        .app-window {
+            width: 900px;
+            height: 600px;
+            background: #1E1E1E;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Bar */
+        .navbar {
+            height: 56px;
+            background: #252526;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid #333;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #0066FF 0%, #00C853 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-menu li {
+            color: #9ca3af;
+            font-size: 14px;
+            cursor: pointer;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-menu li:hover {
+            color: #fff;
+        }
+
+        .nav-menu li.active {
+            color: #fff;
+            position: relative;
+        }
+
+        .nav-menu li.active::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #0066FF;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .window-btn.close { background: #ff5f56; }
+        .window-btn.minimize { background: #ffbd2e; }
+        .window-btn.maximize { background: #27c93f; }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        /* Status Card */
+        .status-card {
+            background: #252526;
+            border-radius: 8px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-indicator-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #00C853;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
+            position: relative;
+        }
+
+        .status-circle::before {
+            content: '';
+            position: absolute;
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 200, 83, 0.3);
+        }
+
+        .status-circle::after {
+            content: '';
+            width: 28px;
+            height: 28px;
+            background: #fff;
+            clip-path: polygon(20% 0%, 80% 50%, 20% 100%);
+            margin-left: 4px;
+        }
+
+        .status-label {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .status-meta {
+            margin-left: auto;
+            display: flex;
+            gap: 32px;
+            text-align: right;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 16px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .action-btn {
+            flex: 1;
+            height: 80px;
+            background: #252526;
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-btn:hover {
+            background: #2d2d2e;
+            border-color: #0066FF;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.primary {
+            background: #0066FF;
+            border-color: #0066FF;
+        }
+
+        .action-btn.primary:hover {
+            background: #0052cc;
+            border-color: #0052cc;
+        }
+
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn.primary .action-icon {
+            color: #fff;
+        }
+
+        .action-btn:not(.primary) .action-icon {
+            color: #9ca3af;
+        }
+
+        .action-btn:hover:not(.primary) .action-icon {
+            color: #fff;
+        }
+
+        .action-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn.primary .action-label {
+            color: #fff;
+        }
+
+        .action-btn:not(.primary) .action-label {
+            color: #9ca3af;
+        }
+
+        .action-btn:hover:not(.primary) .action-label {
+            color: #fff;
+        }
+
+        /* Resource Grid */
+        .resource-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .resource-card {
+            background: #252526;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            border: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .resource-card:hover {
+            border-color: #333;
+        }
+
+        .resource-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .resource-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .resource-dot.green {
+            background: #00C853;
+            box-shadow: 0 0 8px rgba(0, 200, 83, 0.5);
+        }
+
+        .resource-title {
+            font-size: 14px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .resource-value {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 18px;
+            color: #fff;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .resource-value.large {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0066FF 0%, #00C853 100%);
+            border-radius: 4px;
+            width: 25%;
+        }
+
+        .progress-label {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 13px;
+            color: #fff;
+            margin-top: 8px;
+        }
+
+        /* Icons */
+        .icon-stop::before { content: '⏹'; font-size: 20px; }
+        .icon-restart::before { content: '↻'; font-size: 20px; }
+        .icon-config::before { content: '⚙'; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="app-window">
+        <!-- Top Navigation -->
+        <nav class="navbar">
+            <div class="logo">
+                <div class="logo-icon">P</div>
+                <span>PorterClaw</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="active">Dashboard</li>
+                <li>Config</li>
+                <li>Logs</li>
+                <li>Migrate</li>
+                <li>Settings</li>
+            </ul>
+            <div class="window-controls">
+                <div class="window-btn minimize"></div>
+                <div class="window-btn maximize"></div>
+                <div class="window-btn close"></div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Status Card -->
+            <div class="status-card">
+                <div class="status-indicator-wrapper">
+                    <div class="status-circle"></div>
+                    <span class="status-label">Running</span>
+                </div>
+                <div class="status-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Version</span>
+                        <span class="meta-value">v0.12.3</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Uptime</span>
+                        <span class="meta-value">2d 4h 32m</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <button class="action-btn">
+                    <span class="action-icon icon-stop"></span>
+                    <span class="action-label">Stop</span>
+                </button>
+                <button class="action-btn primary">
+                    <span class="action-icon icon-restart"></span>
+                    <span class="action-label">Restart</span>
+                </button>
+                <button class="action-btn">
+                    <span class="action-icon icon-config"></span>
+                    <span class="action-label">Config</span>
+                </button>
+            </div>
+
+            <!-- Resource Monitor Grid -->
+            <div class="resource-grid">
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-dot green"></div>
+                        <span class="resource-title">Gateway</span>
+                    </div>
+                    <span class="resource-value">Running</span>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-dot green"></div>
+                        <span class="resource-title">Node</span>
+                    </div>
+                    <span class="resource-value">Connected</span>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-dot green"></div>
+                        <span class="resource-title">Memory</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-label">256MB / 1GB</span>
+                </div>
+
+                <div class="resource-card">
+                    <div class="resource-header">
+                        <div class="resource-dot green"></div>
+                        <span class="resource-title">Active Skills</span>
+                    </div>
+                    <span class="resource-value large">12</span>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
