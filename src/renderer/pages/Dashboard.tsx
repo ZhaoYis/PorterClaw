@@ -72,9 +72,11 @@ export const Dashboard: React.FC = () => {
             />
           )}
           <Spin spinning={isLoading} tip="Loading...">
-            <StatusCard />
-            <QuickActions />
-            <ResourceGrid />
+            <div className="content-wrapper">
+              <StatusCard />
+              <QuickActions />
+              <ResourceGrid />
+            </div>
           </Spin>
         </main>
       </div>

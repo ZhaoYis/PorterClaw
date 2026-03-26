@@ -17,6 +17,13 @@ export const ResourceGrid: React.FC = React.memo(() => {
     return metrics.memory.percentage;
   }, [metrics.memory.percentage]);
 
+  const memoryStatus = useMemo(() => {
+    const percentage = metrics.memory.percentage;
+    if (percentage >= 90) return 'red';
+    if (percentage >= 80) return 'yellow';
+    return 'green';
+  }, [metrics.memory.percentage]);
+
   const memoryProgressLabel = useMemo(() => {
     return `${metrics.memory.used}MB / ${metrics.memory.total}MB`;
   }, [metrics.memory.used, metrics.memory.total]);
@@ -35,7 +42,7 @@ export const ResourceGrid: React.FC = React.memo(() => {
       />
       <ResourceCard
         title="Memory"
-        status="green"
+        status={memoryStatus}
         showProgress
         progress={memoryProgress}
         progressLabel={memoryProgressLabel}

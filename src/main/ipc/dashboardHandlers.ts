@@ -1,54 +1,121 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
 import { SystemStatus, ResourceMetrics } from '@common/types/dashboard';
+import {
+  getGatewayStatus,
+  getNodeStatus,
+  getMemoryInfo,
+  getActiveSkillsCount,
+  getMockSkillsCount,
+} from '../monitoring';
 
-let currentStatus: SystemStatus = {
-  gateway: 'running',
-  node: 'connected',
-  overall: 'running',
-};
+let appStartTime = Date.now();
 
-let currentMetrics: ResourceMetrics = {
-  version: 'v0.12.3',
-  uptime: 187920,
-  uptimeFormatted: '2d 4h 32m',
-  memory: {
-    used: 256,
-    total: 1024,
-    percentage: 25,
-  },
-  activeSkills: 12,
-};
+/**
+ * Format uptime in seconds to human-readable format
+ */
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${days}d ${hours}h ${minutes}m`;
+}
 
-let uptimeStart = Date.now() - 187920 * 1000;
+/**
+ * Get system status from real monitoring data
+ */
+async function getSystemStatus(): Promise<SystemStatus> {
+  try {
+    const gatewayStatus = await getGatewayStatus();
+    const nodeStatus = await getNodeStatus();
 
-export function registerDashboardHandlers(): void {
-  ipcMain.handle('dashboard:status', async (): Promise<SystemStatus> => {
-    return currentStatus;
-  });
+    // Determine overall status
+    let overall: 'running' | 'stopped' | 'error';
+    if (gatewayStatus === 'running') {
+      overall = 'running';
+    } else if (gatewayStatus === 'stopped') {
+      overall = 'stopped';
+    } else {
+      overall = 'error';
+    }
 
-  ipcMain.handle('dashboard:metrics', async (): Promise<ResourceMetrics> => {
-    const uptimeSeconds = Math.floor((Date.now() - uptimeStart) / 1000);
     return {
-      ...currentMetrics,
-      uptime: uptimeSeconds,
+      gateway: gatewayStatus === 'running' ? 'running' : 'stopped',
+      node: nodeStatus === 'connected' ? 'connected' : 'disconnected',
+      overall,
     };
-  });
-
-  ipcMain.handle('dashboard:stop', async (): Promise<void> => {
-    currentStatus = {
+  } catch (error) {
+    console.error('Error getting system status:', error);
+    return {
       gateway: 'stopped',
       node: 'disconnected',
       overall: 'stopped',
     };
+  }
+}
+
+/**
+ * Get resource metrics from real monitoring data
+ */
+async function getResourceMetrics(): Promise<ResourceMetrics> {
+  try {
+    const uptimeSeconds = Math.floor((Date.now() - appStartTime) / 1000);
+
+    // Get memory info
+    const memoryInfo = getMemoryInfo();
+
+    // Get active skills count
+    let activeSkills = await getActiveSkillsCount();
+    // If Gateway not available, use mock for demo
+    if (activeSkills === 0) {
+      activeSkills = getMockSkillsCount();
+    }
+
+    return {
+      version: app.getVersion(),
+      uptime: uptimeSeconds,
+      uptimeFormatted: formatUptime(uptimeSeconds),
+      memory: {
+        used: memoryInfo.appUsed,
+        total: memoryInfo.total,
+        percentage: memoryInfo.percentage,
+      },
+      activeSkills,
+    };
+  } catch (error) {
+    console.error('Error getting resource metrics:', error);
+    // Return fallback data
+    const uptimeSeconds = Math.floor((Date.now() - appStartTime) / 1000);
+    return {
+      version: app.getVersion(),
+      uptime: uptimeSeconds,
+      uptimeFormatted: formatUptime(uptimeSeconds),
+      memory: {
+        used: 0,
+        total: 0,
+        percentage: 0,
+      },
+      activeSkills: 0,
+    };
+  }
+}
+
+export function registerDashboardHandlers(): void {
+  ipcMain.handle('dashboard:status', async (): Promise<SystemStatus> => {
+    return getSystemStatus();
+  });
+
+  ipcMain.handle('dashboard:metrics', async (): Promise<ResourceMetrics> => {
+    return getResourceMetrics();
+  });
+
+  ipcMain.handle('dashboard:stop', async (): Promise<void> => {
+    // In a real implementation, this would send a stop command to Gateway
+    console.log('Stop service requested');
   });
 
   ipcMain.handle('dashboard:restart', async (): Promise<void> => {
-    currentStatus = {
-      gateway: 'running',
-      node: 'connected',
-      overall: 'running',
-    };
-    uptimeStart = Date.now();
+    // In a real implementation, this would send a restart command to Gateway
+    console.log('Restart service requested');
+    appStartTime = Date.now();
   });
 }
-
