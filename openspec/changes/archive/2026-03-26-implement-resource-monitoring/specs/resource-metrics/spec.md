@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: 资源指标数据获取
 系统 SHALL 从真实环境获取资源监控数据，而非使用模拟数据。
