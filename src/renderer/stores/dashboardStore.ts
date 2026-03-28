@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { DashboardStore, SystemStatus, ResourceMetrics } from '@common/types/dashboard';
+import { dashboardService } from '../services/monitoringService';
 
 const formatUptime = (seconds: number): string => {
   const days = Math.floor(seconds / 86400);
@@ -9,21 +10,21 @@ const formatUptime = (seconds: number): string => {
 };
 
 const initialStatus: SystemStatus = {
-  gateway: 'running',
-  node: 'connected',
-  overall: 'running',
+  gateway: 'stopped',
+  node: 'disconnected',
+  overall: 'stopped',
 };
 
 const initialMetrics: ResourceMetrics = {
   version: 'v0.12.3',
-  uptime: 187920,
-  uptimeFormatted: '2d 4h 32m',
+  uptime: 0,
+  uptimeFormatted: '0d 0h 0m',
   memory: {
-    used: 256,
-    total: 1024,
-    percentage: 25,
+    used: 0,
+    total: 0,
+    percentage: 0,
   },
-  activeSkills: 12,
+  activeSkills: 0,
 };
 
 export const useDashboardStore = create<DashboardStore>((set, get) => ({
@@ -35,9 +36,10 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   refreshStatus: async () => {
     try {
       set({ isLoading: true, error: null });
-      const status = await window.electron.dashboard.getStatus();
+      const status = await dashboardService.getStatus();
       set({ status, isLoading: false });
     } catch (error) {
+      console.error('Failed to refresh status:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch status',
         isLoading: false
@@ -48,7 +50,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   refreshMetrics: async () => {
     try {
       set({ isLoading: true, error: null });
-      const metrics = await window.electron.dashboard.getMetrics();
+      const metrics = await dashboardService.getMetrics();
       set({
         metrics: {
           ...metrics,
@@ -57,6 +59,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
         isLoading: false
       });
     } catch (error) {
+      console.error('Failed to refresh metrics:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch metrics',
         isLoading: false
@@ -67,7 +70,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   stopService: async () => {
     try {
       set({ isLoading: true, error: null });
-      await window.electron.dashboard.stopService();
+      await dashboardService.stopService();
       await get().refreshStatus();
       set({ isLoading: false });
     } catch (error) {
@@ -81,7 +84,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   restartService: async () => {
     try {
       set({ isLoading: true, error: null });
-      await window.electron.dashboard.restartService();
+      await dashboardService.restartService();
       await get().refreshStatus();
       set({ isLoading: false });
     } catch (error) {
