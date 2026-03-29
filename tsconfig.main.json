@@ -21,6 +21,6 @@
       "@main/*": ["src/main/*"]
     }
   },
-  "include": ["src/main/**/*", "src/common/**/*", "src/types/**/*"],
+  "include": ["src/main/**/*", "src/common/**/*", "src/types/**/*", "src/preload/**/*"],
   "exclude": ["node_modules", "dist", "src/renderer"]
 }

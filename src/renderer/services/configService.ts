@@ -15,7 +15,7 @@ function getGatewayBase(): string {
       const port = settings.gatewayPort || 18789;
       return `http://${host}:${port}`;
     }
-  } catch { /* ignore */ }
+  } catch (e) { console.error('Error fetching stored settings:', e); }
   return 'http://localhost:18789';
 }
 
@@ -49,6 +49,7 @@ export async function checkSystemEnvironment(): Promise<EnvironmentStatus> {
         nodeInstalled = true;
       }
     } catch (e) {
+      console.error('Failed to check Node.js version:', e);
       // ignore error, node simply isn't installed
     }
 
@@ -190,7 +191,7 @@ export async function loadOpenClawConfig(): Promise<OpenClawConfig> {
       port = s.gatewayPort || 18789;
       host = s.gatewayHost || 'localhost';
     }
-  } catch { /* ignore */ }
+  } catch (e) { console.error('Error fetching stored settings:', e); }
 
   return {
     gateway: {
