@@ -1,11 +1,9 @@
 import React, { useEffect, useCallback, useRef } from 'react';
-import { ConfigProvider, theme, Alert, Spin } from 'antd';
-import { Navbar } from '../components/Navbar';
+import { Alert, Spin } from 'antd';
 import { StatusCard } from '../components/StatusCard';
 import { QuickActions } from '../components/QuickActions';
 import { ResourceGrid } from '../components/ResourceGrid';
 import { useDashboardStore } from '../stores/dashboardStore';
-import '../styles/dashboard.css';
 
 const REFRESH_INTERVAL = 5000;
 
@@ -46,41 +44,24 @@ export const Dashboard: React.FC = () => {
   }, [setError]);
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: '#0066FF',
-          colorSuccess: '#00C853',
-          colorBgBase: '#1E1E1E',
-          colorBgContainer: '#252526',
-          colorBorder: '#333',
-          borderRadius: 8,
-        },
-      }}
-    >
-      <div className="app-window">
-        <Navbar />
-        <main className="main-content">
-          {error && (
-            <Alert
-              message={error}
-              type="error"
-              closable
-              onClose={handleCloseError}
-              style={{ marginBottom: 16 }}
-            />
-          )}
-          <Spin spinning={isLoading} tip="Loading...">
-            <div className="content-wrapper">
-              <StatusCard />
-              <QuickActions />
-              <ResourceGrid />
-            </div>
-          </Spin>
-        </main>
-      </div>
-    </ConfigProvider>
+    <>
+      {error && (
+        <Alert
+          message={error}
+          type="error"
+          closable
+          onClose={handleCloseError}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+      <Spin spinning={isLoading} tip="Loading...">
+        <div className="content-wrapper">
+          <StatusCard />
+          <QuickActions />
+          <ResourceGrid />
+        </div>
+      </Spin>
+    </>
   );
 };
 

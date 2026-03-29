@@ -5,14 +5,27 @@
  * the IPC bridge is unavailable. This service provides fallback
  * monitoring by directly calling the OpenClaw Gateway HTTP APIs
  * and reading local system metrics.
+ * 
+ * Gateway port is now configurable via Settings (default: 18789).
  */
 
 import type { SystemStatus, ResourceMetrics } from '@common/types/dashboard';
 
-const GATEWAY_API_BASE = 'http://localhost:8080';
 const GATEWAY_API_TIMEOUT = 3000;
-
 let appStartTime = Date.now();
+
+function getGatewayBase(): string {
+  try {
+    const stored = localStorage.getItem('porterclaw_settings');
+    if (stored) {
+      const settings = JSON.parse(stored);
+      const host = settings.gatewayHost || 'localhost';
+      const port = settings.gatewayPort || 18789;
+      return `http://${host}:${port}`;
+    }
+  } catch { /* ignore */ }
+  return 'http://localhost:18789';
+}
 
 /**
  * Check if we're running inside Electron
@@ -40,12 +53,12 @@ async function fetchWithTimeout(url: string, timeoutMs: number = GATEWAY_API_TIM
  * Check if Gateway is running by attempting to connect
  */
 async function checkGatewayRunning(): Promise<boolean> {
+  const base = getGatewayBase();
   try {
-    // Try common health/status endpoints
     const endpoints = [
-      `${GATEWAY_API_BASE}/health`,
-      `${GATEWAY_API_BASE}/api/v1/status`,
-      `${GATEWAY_API_BASE}/`,
+      `${base}/health`,
+      `${base}/api/v1/status`,
+      `${base}/`,
     ];
 
     for (const endpoint of endpoints) {
@@ -59,9 +72,8 @@ async function checkGatewayRunning(): Promise<boolean> {
       }
     }
 
-    // Last resort: just try to connect to the port
     try {
-      await fetchWithTimeout(GATEWAY_API_BASE, 1500);
+      await fetchWithTimeout(base, 1500);
       return true;
     } catch {
       return false;
@@ -75,8 +87,9 @@ async function checkGatewayRunning(): Promise<boolean> {
  * Check node status via Gateway API
  */
 async function checkNodeStatus(): Promise<'connected' | 'disconnected'> {
+  const base = getGatewayBase();
   try {
-    const response = await fetchWithTimeout(`${GATEWAY_API_BASE}/api/v1/nodes`);
+    const response = await fetchWithTimeout(`${base}/api/v1/nodes`);
     if (response.ok) {
       const data = await response.json();
       if (data.nodes && data.nodes.length > 0) {
@@ -99,8 +112,9 @@ async function checkNodeStatus(): Promise<'connected' | 'disconnected'> {
  * Get active skills count via Gateway API
  */
 async function getActiveSkillsFromAPI(): Promise<number> {
+  const base = getGatewayBase();
   try {
-    const response = await fetchWithTimeout(`${GATEWAY_API_BASE}/api/v1/skills`);
+    const response = await fetchWithTimeout(`${base}/api/v1/skills`);
     if (response.ok) {
       const data = await response.json();
       if (data.active !== undefined) return data.active;
@@ -111,8 +125,7 @@ async function getActiveSkillsFromAPI(): Promise<number> {
       }
     }
 
-    // Fallback: try tasks endpoint
-    const tasksResponse = await fetchWithTimeout(`${GATEWAY_API_BASE}/api/v1/tasks`);
+    const tasksResponse = await fetchWithTimeout(`${base}/api/v1/tasks`);
     if (tasksResponse.ok) {
       const data = await tasksResponse.json();
       if (data.running !== undefined) return data.running;
@@ -129,18 +142,12 @@ async function getActiveSkillsFromAPI(): Promise<number> {
   }
 }
 
-/**
- * Mock skills count for demo when Gateway is not available
- */
 function getMockSkillsCount(): number {
   const base = 10;
   const variation = Math.sin(Date.now() / 60000) * 3;
   return Math.max(0, Math.round(base + variation));
 }
 
-/**
- * Format uptime seconds to human-readable
- */
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -148,9 +155,6 @@ function formatUptime(seconds: number): string {
   return `${days}d ${hours}h ${minutes}m`;
 }
 
-/**
- * Get system status (web fallback)
- */
 export async function getStatusWeb(): Promise<SystemStatus> {
   try {
     const gatewayRunning = await checkGatewayRunning();
@@ -171,16 +175,10 @@ export async function getStatusWeb(): Promise<SystemStatus> {
   }
 }
 
-/**
- * Get resource metrics (web fallback)
- * Note: In web mode, we can't access system-level memory via os module,
- * so we use browser performance API as a rough approximation.
- */
 export async function getMetricsWeb(): Promise<ResourceMetrics> {
   try {
     const uptimeSeconds = Math.floor((Date.now() - appStartTime) / 1000);
 
-    // Use browser Performance API for memory (Chrome/Electron only)
     let memoryUsed = 0;
     let memoryTotal = 0;
     let memoryPercentage = 0;
@@ -192,7 +190,6 @@ export async function getMetricsWeb(): Promise<ResourceMetrics> {
       memoryPercentage = memoryTotal > 0 ? Math.round((memoryUsed / memoryTotal) * 100) : 0;
     }
 
-    // Try to get active skills from API
     let activeSkills = await getActiveSkillsFromAPI();
     if (activeSkills === 0) {
       activeSkills = getMockSkillsCount();
@@ -222,9 +219,6 @@ export async function getMetricsWeb(): Promise<ResourceMetrics> {
   }
 }
 
-/**
- * Unified dashboard API that works in both Electron and web mode
- */
 export const dashboardService = {
   async getStatus(): Promise<SystemStatus> {
     if (isElectronEnvironment()) {
@@ -240,19 +234,53 @@ export const dashboardService = {
     return getMetricsWeb();
   },
 
+  /**
+   * Check if the gateway is currently reachable
+   */
+  async isGatewayRunning(): Promise<boolean> {
+    return checkGatewayRunning();
+  },
+
   async stopService(): Promise<void> {
     if (isElectronEnvironment()) {
       return window.electron.dashboard.stopService();
     }
-    console.warn('Stop service is not available in web mode');
+
+    // Web mode: attempt to call gateway shutdown endpoint
+    const base = getGatewayBase();
+    const running = await checkGatewayRunning();
+    if (!running) {
+      throw new Error('Gateway is not running — nothing to stop');
+    }
+
+    try {
+      // Attempt graceful shutdown via API
+      await fetchWithTimeout(`${base}/api/v1/shutdown`, GATEWAY_API_TIMEOUT);
+    } catch {
+      // Even if the endpoint doesn't exist, the gateway may have its own mechanism
+      console.warn('[Web Mode] Gateway shutdown endpoint not available. Run manually: openclaw gateway stop');
+    }
   },
 
   async restartService(): Promise<void> {
     if (isElectronEnvironment()) {
       return window.electron.dashboard.restartService();
     }
-    // In web mode, just reset the uptime counter
+
+    // Web mode: attempt restart via API, otherwise reset uptime
+    const base = getGatewayBase();
+    const running = await checkGatewayRunning();
+
+    if (running) {
+      try {
+        await fetchWithTimeout(`${base}/api/v1/restart`, GATEWAY_API_TIMEOUT);
+      } catch {
+        console.warn('[Web Mode] Gateway restart endpoint not available. Run manually: openclaw gateway restart');
+      }
+    }
+
+    // Reset local uptime tracking
     appStartTime = Date.now();
-    console.warn('Restart service is not available in web mode — reset uptime only');
   },
 };
+

@@ -1,0 +1,233 @@
+/* ========== Migrate Page Styles ========== */
+
+.migrate-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+}
+
+.migrate-page h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.migrate-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.migrate-section {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.migrate-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Package Options */
+.migrate-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.migrate-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  transition: border-color 0.2s;
+}
+
+.migrate-option:hover {
+  border-color: #0066FF;
+}
+
+.migrate-option-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.migrate-option-icon {
+  font-size: 18px;
+  color: var(--text-secondary);
+  width: 28px;
+  text-align: center;
+}
+
+.migrate-option-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Pack Button */
+.migrate-pack-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0066FF 0%, #00C853 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.migrate-pack-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.migrate-pack-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Progress */
+.migrate-progress {
+  margin-top: 16px;
+}
+
+.migrate-progress-bar {
+  width: 100%;
+  height: 10px;
+  background: var(--input-bg);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.migrate-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0066FF 0%, #00C853 100%);
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.migrate-progress-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Package History */
+.migrate-packages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.migrate-package {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  transition: border-color 0.2s;
+}
+
+.migrate-package:hover {
+  border-color: #333;
+}
+
+.migrate-package-icon {
+  font-size: 20px;
+  color: #0066FF;
+}
+
+.migrate-package-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.migrate-package-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.migrate-package-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.migrate-package-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.migrate-pkg-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.migrate-pkg-btn:hover {
+  border-color: #0066FF;
+  color: #0066FF;
+}
+
+.migrate-pkg-btn.danger:hover {
+  border-color: #ff5f56;
+  color: #ff5f56;
+}
+
+.migrate-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+/* Done animation */
+.migrate-done {
+  text-align: center;
+  padding: 16px;
+  color: #00C853;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}

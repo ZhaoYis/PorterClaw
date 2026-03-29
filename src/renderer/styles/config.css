@@ -1,0 +1,406 @@
+/* ========== Config Page Styles ========== */
+
+.config-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+}
+
+.config-page h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.config-section {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.config-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Install Guide */
+.install-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.install-status.installed {
+  background: rgba(0, 200, 83, 0.1);
+  border: 1px solid rgba(0, 200, 83, 0.3);
+}
+
+.install-status.not-installed {
+  background: rgba(255, 95, 86, 0.1);
+  border: 1px solid rgba(255, 95, 86, 0.3);
+}
+
+.install-status.checking {
+  background: rgba(0, 102, 255, 0.1);
+  border: 1px solid rgba(0, 102, 255, 0.3);
+}
+
+.install-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.install-status-dot.green {
+  background: #00C853;
+  box-shadow: 0 0 8px rgba(0, 200, 83, 0.5);
+}
+
+.install-status-dot.red {
+  background: #ff5f56;
+  box-shadow: 0 0 8px rgba(255, 95, 86, 0.5);
+}
+
+.install-status-dot.blue {
+  background: #0066FF;
+  box-shadow: 0 0 8px rgba(0, 102, 255, 0.5);
+  animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.install-status-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.install-version {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* Install Steps */
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.install-step {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+}
+
+.install-step-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.install-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0066FF;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.install-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.install-step-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  padding-left: 34px;
+}
+
+.install-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 34px;
+}
+
+.install-command code {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #00C853;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.install-command .copy-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.install-command .copy-btn:hover {
+  border-color: #0066FF;
+  color: #0066FF;
+}
+
+.install-step-actions {
+  margin-top: 12px;
+  padding-left: 34px;
+}
+
+/* Gateway Control */
+.gateway-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.gw-btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gw-btn:hover:not(:disabled) {
+  border-color: #0066FF;
+  color: #0066FF;
+  transform: translateY(-1px);
+}
+
+.gw-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gw-btn.start {
+  background: #00C853;
+  border-color: #00C853;
+  color: #fff;
+}
+
+.gw-btn.start:hover:not(:disabled) {
+  background: #00a844;
+  border-color: #00a844;
+  color: #fff;
+}
+
+.gw-btn.stop {
+  border-color: #ff5f56;
+  color: #ff5f56;
+}
+
+.gw-btn.stop:hover:not(:disabled) {
+  background: #ff5f56;
+  color: #fff;
+}
+
+.gateway-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: var(--input-bg);
+  margin-top: 12px;
+}
+
+.gateway-status-bar .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.gateway-status-bar .status-dot.running {
+  background: #00C853;
+  box-shadow: 0 0 6px rgba(0, 200, 83, 0.5);
+}
+
+.gateway-status-bar .status-dot.stopped {
+  background: #ff5f56;
+  box-shadow: 0 0 6px rgba(255, 95, 86, 0.5);
+}
+
+.gateway-status-bar .status-dot.unknown {
+  background: #ffbd2e;
+  box-shadow: 0 0 6px rgba(255, 189, 46, 0.5);
+}
+
+.gateway-status-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Command Output */
+.command-output {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: #9ca3af;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+/* Config Editor */
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.config-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.config-field:last-child {
+  border-bottom: none;
+}
+
+.config-field-label {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.config-field-input {
+  width: 200px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.config-field-input:focus {
+  border-color: #0066FF;
+}
+
+.config-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.config-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.config-btn:hover {
+  border-color: #0066FF;
+  color: #0066FF;
+}
+
+.config-btn.primary {
+  background: #0066FF;
+  border-color: #0066FF;
+  color: #fff;
+}
+
+.config-btn.primary:hover {
+  background: #0052cc;
+}
+
+/* Migrate Import */
+.import-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 32px;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.import-zone:hover {
+  border-color: #0066FF;
+  background: rgba(0, 102, 255, 0.05);
+}
+
+.import-zone-icon {
+  font-size: 32px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.import-zone-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.import-zone-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
