@@ -79,8 +79,8 @@ export async function checkSystemEnvironment(): Promise<EnvironmentStatus> {
 export async function checkOpenClawInstalled(): Promise<OpenClawInfo> {
   if (isElectronEnvironment()) {
     try {
-      // Use openclaw -v to verify OpenClaw is installed
-      const result = await window.electron.system.exec('openclaw -v');
+      // Use openclaw --version to verify OpenClaw is installed
+      const result = await window.electron.system.exec('openclaw --version');
       if (result.success && result.output) {
         return {
           installed: true,
@@ -159,8 +159,12 @@ export async function executeGatewayAction(action: GatewayAction): Promise<strin
   };
 
   if (isElectronEnvironment()) {
-    // Electron would run the actual command
-    return `Executing: ${commands[action]}`;
+    // Electron runs the actual command via IPC
+    const result = await window.electron.system.exec(commands[action]);
+    if (!result.success) {
+      throw new Error(result.error || `Failed to execute ${action}`);
+    }
+    return result.output || result.error || 'Done';
   }
 
   // Web mode: return the command for user reference
@@ -207,7 +211,11 @@ export async function loadOpenClawConfig(): Promise<OpenClawConfig> {
  */
 export async function runDoctor(): Promise<string> {
   if (isElectronEnvironment()) {
-    return 'Running openclaw doctor --fix...';
+    const result = await window.electron.system.exec('openclaw doctor --fix');
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to run openclaw doctor');
+    }
+    return result.output || result.error || 'Done';
   }
   return '[Web Mode] Run manually: openclaw doctor --fix';
 }

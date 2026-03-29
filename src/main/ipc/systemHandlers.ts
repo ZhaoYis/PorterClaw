@@ -8,7 +8,18 @@ const execPromise = util.promisify(exec);
 export function registerSystemHandlers(): void {
   ipcMain.handle('system:exec', async (_, command: string) => {
     // Basic whitelist to prevent arbitrary command execution via this IPC
-    const allowedCommands = ['node -v', 'openclaw -v', 'openclaw --version'];
+    const allowedCommands = [
+      'node -v',
+      'openclaw -v',
+      'openclaw --version',
+      'openclaw gateway start',
+      'openclaw gateway stop',
+      'openclaw gateway restart',
+      'openclaw gateway status',
+      'openclaw gateway install',
+      'openclaw gateway uninstall',
+      'openclaw doctor --fix'
+    ];
 
     if (!allowedCommands.includes(command)) {
       throw new Error(`Command not permitted: ${command}`);
