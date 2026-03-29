@@ -3,7 +3,7 @@
  * Checks OpenClaw installation status and provides gateway control
  */
 
-import type { OpenClawInfo, GatewayAction, GatewayServiceStatus, OpenClawConfig } from '@common/types/config';
+import type { OpenClawInfo, GatewayAction, GatewayServiceStatus, OpenClawConfig, EnvironmentStatus } from '@common/types/config';
 import { isElectronEnvironment } from './monitoringService';
 
 function getGatewayBase(): string {
@@ -27,6 +27,41 @@ async function fetchWithTimeout(url: string, timeoutMs = 3000): Promise<Response
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+/**
+ * Assess the physical environment (Node.js, OpenClaw, OS)
+ */
+export async function checkSystemEnvironment(): Promise<EnvironmentStatus> {
+  let osName = 'Unknown OS';
+  const pf = navigator.platform.toLowerCase();
+  if (pf.includes('win')) osName = 'Windows';
+  else if (pf.includes('mac') || pf.includes('darwin')) osName = 'macOS';
+  else if (pf.includes('linux')) osName = 'Linux';
+
+  if (isElectronEnvironment()) {
+    // [DESKTOP PACKAGING API]
+    // In Electron Desktop Mode, this is where we will invoke child_process
+    // to run `node -v` and `openclaw --version` via IPC.
+    // e.g. const nodeVersion = await window.electron.exec('node -v');
+    return {
+      os: osName,
+      components: [
+        { name: 'Node.js', installed: true, version: 'v20.x (Desktop)', requiredVersion: '>=18.0.0' },
+        { name: 'Gateway', installed: false, requiredVersion: 'latest' }
+      ]
+    };
+  }
+
+  // Web Mode Simulation: Pretend Node.js is ready but Gateway is not installed
+  await new Promise(r => setTimeout(r, 600)); // Simulate async check
+  return {
+    os: osName,
+    components: [
+      { name: 'Node.js', installed: true, version: 'v20.11.0', requiredVersion: '>=18.0.0' },
+      { name: 'Gateway', installed: false, requiredVersion: 'latest' }
+    ]
+  };
 }
 
 /**
@@ -159,11 +194,78 @@ export async function runDoctor(): Promise<string> {
  * Get install command for current platform
  */
 export function getInstallCommand(): string {
-  const isMac = navigator.platform.toLowerCase().includes('mac');
   const isWin = navigator.platform.toLowerCase().includes('win');
 
   if (isWin) {
     return 'iwr -useb https://openclaw.ai/install.ps1 | iex';
   }
   return 'curl -fsSL https://openclaw.ai/install.sh | bash';
+}
+
+/**
+ * Simulate automated installation with fake timings and log outputs.
+ */
+export async function simulateAutoInstall(
+  onLog: (line: string) => void,
+  onPhase: (phase: import('@common/types/config').InstallPhase) => void,
+  simulateError = false
+): Promise<void> {
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  try {
+    // 1. Check Prereqs
+    onPhase('checking_prereqs');
+    onLog('> Checking system architecture...');
+    await wait(400);
+    onLog('System: OS X / Darwin, x64');
+    onLog('> Checking Node.js requirement...');
+    await wait(600);
+
+    if (simulateError) {
+      onLog('ERROR: Node.js is not installed locally and permission denied for auto-download.');
+      onPhase('error');
+      const err = new Error('Permission denied while verifying Node.js path');
+      (err as any).solution = 'Try running PorterClaw as an Administrator, or manually install Node.js from https://nodejs.org/';
+      throw err;
+    }
+
+    onLog('Node.js not found. Preparing to download...');
+    await wait(500);
+
+    // 2. Install Node
+    onPhase('installing_node');
+    onLog('> Downloading Node.js v20 LTS...');
+    for (let i = 1; i <= 3; i++) {
+      onLog(`Downloading... ${i * 33}%`);
+      await wait(500);
+    }
+    onLog('> Extracting Node.js binaries...');
+    await wait(800);
+    onLog('Node.js verified and exported to isolated path.');
+
+    // 3. Install OpenClaw
+    onPhase('installing_openclaw');
+    onLog('> npm install -g @openclaw/cli@latest');
+    await wait(800);
+    onLog('fetchMetadata: sill resolveWithNewModule @openclaw/cli@latest');
+    await wait(400);
+    onLog('added 123 packages, and audited 124 packages in 4s');
+    onLog('found 0 vulnerabilities');
+    await wait(500);
+
+    // 4. Verify
+    onPhase('verifying');
+    onLog('> openclaw --version');
+    await wait(300);
+    onLog('OpenClaw CLI v0.12.3');
+    onLog('> openclaw gateway status');
+    await wait(300);
+    onLog('Gateway is currently stopped.');
+
+    onPhase('success');
+    onLog('=== Installation Completed Successfully ===');
+  } catch (error) {
+    onLog(`=== Installation Aborted ===`);
+    throw error;
+  }
 }

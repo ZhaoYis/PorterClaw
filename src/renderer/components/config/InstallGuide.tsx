@@ -1,40 +1,64 @@
-import React, { useCallback, useState } from 'react';
-import { CheckCircleOutlined, LoadingOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  CheckCircleOutlined,
+  LoadingOutlined,
+  CloseCircleOutlined,
+  PlayCircleOutlined,
+  ExclamationCircleOutlined,
+  BulbOutlined,
+  RedoOutlined,
+  CodeOutlined,
+  LaptopOutlined
+} from '@ant-design/icons';
+import { Switch, Spin } from 'antd';
 import { useConfigStore } from '../../stores/configStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useTranslation } from '../../i18n/translations';
-import { getInstallCommand } from '../../services/configService';
 
 export const InstallGuide: React.FC = React.memo(() => {
-  const { installStatus, openclawInfo, checkInstallation, isExecuting } = useConfigStore();
+  const {
+    installStatus,
+    installPhase,
+    installLogs,
+    installError,
+    envStatus,
+    openclawInfo,
+    isExecuting,
+    autoInstallOpenClaw,
+    resetInstallState,
+    assessEnvironment
+  } = useConfigStore();
+  
   const language = useSettingsStore((s) => s.settings.language);
   const { t } = useTranslation(language);
-  const [copied, setCopied] = useState(false);
+  
+  const [simulateError, setSimulateError] = useState(false);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
-  const installCommand = getInstallCommand();
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(installCommand);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // fallback
-      const textarea = document.createElement('textarea');
-      textarea.value = installCommand;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [installCommand]);
+  }, [installLogs]);
 
-  const handleCheck = useCallback(() => {
-    checkInstallation();
-  }, [checkInstallation]);
+  // Assess environment on mount if we're in installer mode
+  useEffect(() => {
+    if (installStatus !== 'installed' && installStatus !== 'checking') {
+      assessEnvironment();
+    }
+  }, [installStatus, assessEnvironment]);
 
+  const handleInstallClick = () => {
+    autoInstallOpenClaw(simulateError);
+  };
+
+  const handleRetry = () => {
+    resetInstallState();
+    autoInstallOpenClaw(simulateError);
+  };
+
+  // Status indicator logic (Overall Config Component)
   const statusClass =
     installStatus === 'installed'
       ? 'installed'
@@ -51,6 +75,8 @@ export const InstallGuide: React.FC = React.memo(() => {
       : installStatus === 'checking'
       ? LoadingOutlined
       : CloseCircleOutlined;
+
+  const showInstaller = installStatus !== 'installed' && installStatus !== 'checking';
 
   return (
     <div className="config-section">
@@ -73,56 +99,119 @@ export const InstallGuide: React.FC = React.memo(() => {
         )}
       </div>
 
-      {installStatus !== 'installed' && installStatus !== 'checking' && (
-        <div className="install-steps">
-          <div className="install-step">
-            <div className="install-step-header">
-              <div className="install-step-number">1</div>
-              <span className="install-step-title">{t('config.installStep1')}</span>
+      {showInstaller && (
+        <>
+          {/* Environment Check Module */}
+          <div className="env-check-container">
+            <div className="env-check-header">
+              <span>{t('config.envCheck')}</span>
+              {envStatus ? (
+                <span className="env-os-badge">
+                  <LaptopOutlined style={{ marginRight: 6 }} />
+                  {t('config.os')}: {envStatus.os}
+                </span>
+              ) : (
+                <Spin size="small" />
+              )}
             </div>
-            <div className="install-step-desc">{t('config.installStep1Desc')}</div>
-            <div className="install-command">
-              <code>{installCommand}</code>
-              <button className="copy-btn" onClick={handleCopy}>
-                {copied ? t('config.copied') : t('config.copyCommand')}
-              </button>
-            </div>
+            
+            {envStatus?.components.map((comp, idx) => (
+              <div key={idx} className="env-component-item">
+                <div className="env-component-info">
+                  <div className={`env-component-icon ${comp.installed ? 'installed' : 'missing'}`}>
+                    {comp.installed ? <CheckCircleOutlined /> : <CodeOutlined />}
+                  </div>
+                  <div className="env-component-details">
+                    <span className="env-component-name">{comp.name}</span>
+                    {comp.requiredVersion && (
+                      <span className="env-component-req">{t('config.requiredVersion')}: {comp.requiredVersion}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="env-component-status">
+                  <div className={`env-badge ${comp.installed ? 'installed' : 'missing'}`}>
+                    {comp.installed ? t('config.envInstalled' as any) : t('config.envMissing' as any)}
+                  </div>
+                  {comp.installed && comp.version && (
+                    <span className="env-version">{comp.version}</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="install-step">
-            <div className="install-step-header">
-              <div className="install-step-number">2</div>
-              <span className="install-step-title">{t('config.installStep2')}</span>
+          <div className="auto-install-container">
+            {/* Main Action Area */}
+            <div className="install-main-action">
+              <div className="install-phase-text">
+                {isExecuting && installPhase !== 'error' && <LoadingOutlined />}
+                {installPhase === 'success' && <CheckCircleOutlined style={{ color: '#00C853' }} />}
+                {installPhase === 'error' && <CloseCircleOutlined style={{ color: '#ff5f56' }} />}
+                <span>{t(`config.phase.${installPhase}` as any)}</span>
+              </div>
+              
+              {installPhase === 'idle' && (
+                <button
+                  className="gw-btn start"
+                  onClick={handleInstallClick}
+                  disabled={isExecuting || !envStatus}
+                >
+                  <PlayCircleOutlined /> {t('config.oneClickInstall')}
+                </button>
+              )}
+              
+              {installPhase === 'error' && (
+                <button
+                  className="gw-btn"
+                  onClick={handleRetry}
+                  disabled={isExecuting}
+                >
+                  <RedoOutlined /> {t('config.retry')}
+                </button>
+              )}
             </div>
-            <div className="install-step-desc">{t('config.installStep2Desc')}</div>
-            <div className="install-step-actions">
-              <button className="gw-btn" onClick={handleCheck} disabled={isExecuting}>
-                {t('config.checkInstall')}
-              </button>
-            </div>
-          </div>
 
-          <div className="install-step">
-            <div className="install-step-header">
-              <div className="install-step-number">3</div>
-              <span className="install-step-title">{t('config.installStep3')}</span>
-            </div>
-            <div className="install-step-desc">{t('config.installStep3Desc')}</div>
-            <div className="install-step-actions">
-              <button className="gw-btn start" onClick={handleCheck} disabled={isExecuting}>
-                {t('config.testService')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            {/* Dev Simulate Error Toggle */}
+            {(installPhase === 'idle' || installPhase === 'error') && (
+              <div className="simulate-error-toggle">
+                <Switch size="small" checked={simulateError} onChange={setSimulateError} />
+                <span>{t('config.simulateError')}</span>
+              </div>
+            )}
 
-      {installStatus === 'installed' && (
-        <div style={{ marginTop: 12 }}>
-          <button className="gw-btn" onClick={handleCheck} disabled={isExecuting}>
-            {t('config.checkInstall')}
-          </button>
-        </div>
+            {/* Terminal / Logs View */}
+            {(installLogs.length > 0 || isExecuting) && (
+              <div className="install-log-terminal">
+                {installLogs.map((log, index) => (
+                  <div 
+                    key={index} 
+                    className={`install-log-line ${log.includes('ERROR') || log.includes('Aborted') ? 'error' : ''}`}
+                  >
+                    {log}
+                  </div>
+                ))}
+                <div ref={logsEndRef} />
+              </div>
+            )}
+
+            {/* Error & Solution UI */}
+            {installPhase === 'error' && installError && (
+              <div className="install-error-box">
+                <div className="install-error-title">
+                  <ExclamationCircleOutlined /> {t('common.error')}
+                </div>
+                <div className="install-error-msg">
+                  {installError.message}
+                </div>
+                <div className="install-error-solution">
+                  <BulbOutlined style={{ marginRight: 6 }} />
+                  <strong>{t('config.solution')}:</strong> {installError.solution}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </>
       )}
     </div>
   );

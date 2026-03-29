@@ -101,94 +101,219 @@
   margin-left: auto;
 }
 
-/* Install Steps */
-.install-steps {
+/* Auto Installer & Environment Check */
+.env-check-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  background: var(--input-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 16px;
+}
+
+.env-check-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.env-os-badge {
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.env-component-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+}
+
+.env-component-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.env-component-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.env-component-icon.installed {
+  background: rgba(0, 200, 83, 0.1);
+  color: #00C853;
+  border: 1px solid rgba(0, 200, 83, 0.3);
+}
+
+.env-component-icon.missing {
+  background: rgba(255, 95, 86, 0.1);
+  color: #ff5f56;
+  border: 1px solid rgba(255, 95, 86, 0.3);
+}
+
+.env-component-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.env-component-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.env-component-req {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.env-component-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.env-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.env-badge.installed {
+  background: rgba(0, 200, 83, 0.15);
+  color: #00e676;
+}
+
+.env-badge.missing {
+  background: rgba(255, 95, 86, 0.15);
+  color: #ff5f56;
+}
+
+.env-version {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.auto-install-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-top: 16px;
 }
 
-.install-step {
+.install-main-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
   background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
-.install-step-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.install-step-number {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #0066FF;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.install-step-title {
+.install-main-action .gw-btn {
   font-size: 14px;
-  font-weight: 600;
+  padding: 10px 24px;
+}
+
+.install-phase-text {
+  font-size: 14px;
   color: var(--text-primary);
-}
-
-.install-step-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-  padding-left: 34px;
-}
-
-.install-command {
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: 34px;
 }
 
-.install-command code {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.3);
-  color: #00C853;
+.install-log-terminal {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 16px;
+  height: 200px;
+  overflow-y: auto;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 12px;
-  overflow-x: auto;
-  white-space: nowrap;
+  color: #a3be8c;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  border: 1px solid #000;
 }
 
-.install-command .copy-btn {
-  padding: 6px 12px;
+.install-log-line {
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.install-log-line.error {
+  color: #bf616a;
+}
+
+.install-error-box {
+  background: rgba(255, 95, 86, 0.1);
+  border: 1px solid rgba(255, 95, 86, 0.3);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.install-error-title {
+  color: #ff5f56;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.install-error-msg {
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: 12px;
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.install-error-solution {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
   border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
   color: var(--text-secondary);
+  font-size: 13px;
+  border-left: 3px solid #0066FF;
+}
+
+.simulate-error-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.install-command .copy-btn:hover {
-  border-color: #0066FF;
-  color: #0066FF;
-}
-
-.install-step-actions {
-  margin-top: 12px;
-  padding-left: 34px;
+  color: var(--text-tertiary);
+  margin-top: 8px;
 }
 
 /* Gateway Control */

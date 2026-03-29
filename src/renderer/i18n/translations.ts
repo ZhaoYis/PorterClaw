@@ -18,7 +18,12 @@ type TranslationKey =
   | 'config.runDoctor' | 'config.checking' | 'config.port' | 'config.host'
   | 'config.daemon' | 'config.installStep1' | 'config.installStep2' | 'config.installStep3'
   | 'config.installStep1Desc' | 'config.installStep2Desc' | 'config.installStep3Desc'
-  | 'config.copied'
+  | 'config.copied' | 'config.oneClickInstall' | 'config.installLogs'
+  | 'config.phase.idle' | 'config.phase.checking_prereqs' | 'config.phase.installing_node'
+  | 'config.phase.installing_openclaw' | 'config.phase.verifying' | 'config.phase.success'
+  | 'config.phase.error' | 'config.solution' | 'config.retry' | 'config.simulateError'
+  | 'config.envCheck' | 'config.os' | 'config.installedVersion' | 'config.requiredVersion'
+  | 'config.envInstalled' | 'config.envMissing' | 'config.refreshEnv'
   // Logs
   | 'logs.title' | 'logs.all' | 'logs.error' | 'logs.warn' | 'logs.info' | 'logs.debug'
   | 'logs.search' | 'logs.refresh' | 'logs.clear' | 'logs.export'
@@ -97,6 +102,25 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'config.installStep2Desc': 'Verify the installation was successful',
     'config.installStep3Desc': 'Test that the service starts correctly',
     'config.copied': 'Copied!',
+    'config.oneClickInstall': 'One-Click Install',
+    'config.installLogs': 'Installation Output',
+    'config.phase.idle': 'Ready to install',
+    'config.phase.checking_prereqs': 'Checking prerequisites...',
+    'config.phase.installing_node': 'Installing Node.js...',
+    'config.phase.installing_openclaw': 'Installing OpenClaw CLI...',
+    'config.phase.verifying': 'Verifying installation...',
+    'config.phase.success': 'Installation completed successfully',
+    'config.phase.error': 'Installation failed',
+    'config.solution': 'Suggested Solution',
+    'config.retry': 'Retry Installation',
+    'config.simulateError': 'Simulate Error (Dev)',
+    'config.envCheck': 'System Environment Check',
+    'config.os': 'Operating System',
+    'config.installedVersion': 'Installed Version',
+    'config.requiredVersion': 'Required',
+    'config.envInstalled': 'Installed',
+    'config.envMissing': 'Not Installed',
+    'config.refreshEnv': 'Refresh Environment',
     // Logs
     'logs.title': 'Logs',
     'logs.all': 'All',
@@ -219,6 +243,25 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'config.installStep2Desc': '验证安装是否成功',
     'config.installStep3Desc': '测试服务是否能正常启动',
     'config.copied': '已复制！',
+    'config.oneClickInstall': '一键自动安装',
+    'config.installLogs': '安装日志输出',
+    'config.phase.idle': '准备安装',
+    'config.phase.checking_prereqs': '正在检查系统环境...',
+    'config.phase.installing_node': '正在安装 Node.js...',
+    'config.phase.installing_openclaw': '正在安装 OpenClaw CLI...',
+    'config.phase.verifying': '正在验证安装结果...',
+    'config.phase.success': '安装顺利完成',
+    'config.phase.error': '安装过程中遭遇错误',
+    'config.solution': '建议解决方式',
+    'config.retry': '重试安装',
+    'config.simulateError': '模拟安装失败 (测试开关)',
+    'config.envCheck': '系统环境依赖检查',
+    'config.os': '操作系统',
+    'config.installedVersion': '已安装版本',
+    'config.requiredVersion': '需求版本',
+    'config.envInstalled': '已安装',
+    'config.envMissing': '未安装',
+    'config.refreshEnv': '刷新检测',
     // Logs
     'logs.title': '日志管理',
     'logs.all': '全部',

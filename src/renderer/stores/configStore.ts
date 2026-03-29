@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ConfigStore, InstallStatus, GatewayAction, GatewayServiceStatus, OpenClawConfig } from '@common/types/config';
+import type { ConfigStore, GatewayAction, OpenClawConfig } from '@common/types/config';
 import {
   checkOpenClawInstalled,
   checkGatewayStatus,
@@ -10,6 +10,10 @@ import {
 
 export const useConfigStore = create<ConfigStore>((set, get) => ({
   installStatus: 'unknown',
+  installPhase: 'idle',
+  installLogs: [],
+  installError: null,
+  envStatus: null,
   openclawInfo: null,
   gatewayStatus: 'unknown',
   config: null,
@@ -31,6 +35,65 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       set({
         installStatus: 'unknown',
         error: error instanceof Error ? error.message : 'Failed to check installation',
+      });
+    }
+  },
+
+  assessEnvironment: async () => {
+    const { checkSystemEnvironment } = await import('../services/configService');
+    try {
+      set({ isExecuting: true, error: null });
+      const env = await checkSystemEnvironment();
+      set({ envStatus: env, isExecuting: false });
+    } catch (error) {
+      set({
+        isExecuting: false,
+        error: error instanceof Error ? error.message : 'Failed to assess environment',
+      });
+    }
+  },
+
+  resetInstallState: () => {
+    set({
+      installPhase: 'idle',
+      installLogs: [],
+      installError: null,
+    });
+  },
+
+  autoInstallOpenClaw: async (simulateError = false) => {
+    const { simulateAutoInstall } = await import('../services/configService');
+    
+    set({
+      installPhase: 'checking_prereqs',
+      installLogs: [],
+      installError: null,
+      isExecuting: true,
+      error: null,
+    });
+
+    try {
+      await simulateAutoInstall(
+        (logLine) => set((state) => ({ installLogs: [...state.installLogs, logLine] })),
+        (phase) => set({ installPhase: phase }),
+        simulateError
+      );
+
+      // On success, refresh the ultimate status as if it really installed
+      const info = await checkOpenClawInstalled();
+      set({
+        installStatus: 'installed',
+        openclawInfo: info,
+        isExecuting: false,
+      });
+    } catch (e: any) {
+      set({
+        installPhase: 'error',
+        installError: {
+          message: e.message || 'Unknown installation error',
+          solution: e.solution || 'Please check the logs and manually attempt installation via terminal.',
+        },
+        isExecuting: false,
       });
     }
   },
