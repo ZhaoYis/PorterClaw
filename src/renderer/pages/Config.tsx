@@ -10,7 +10,7 @@ import { MigrateImport } from '../components/config/MigrateImport';
 import '../styles/config.css';
 
 const Config: React.FC = () => {
-  const { installStatus, error, setError, checkInstallation, loadConfig } = useConfigStore();
+  const { error, setError, checkInstallation, loadConfig } = useConfigStore();
   const language = useSettingsStore((s) => s.settings.language);
   const { t } = useTranslation(language);
 
