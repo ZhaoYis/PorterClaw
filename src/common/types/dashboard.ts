@@ -41,8 +41,13 @@ export interface DashboardAPI {
   restartService: () => Promise<void>;
 }
 
+export interface SystemAPI {
+  exec: (command: string) => Promise<{ success: boolean; output: string | null; error?: string }>;
+}
+
 export interface IElectronAPI {
   dashboard: DashboardAPI;
+  system: SystemAPI;
 }
 
 declare global {

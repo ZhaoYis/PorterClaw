@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { registerDashboardHandlers } from './ipc/dashboardHandlers';
+import { registerSystemHandlers } from './ipc/systemHandlers';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -28,6 +29,7 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   registerDashboardHandlers();
+  registerSystemHandlers();
   createWindow();
 
   app.on('activate', () => {

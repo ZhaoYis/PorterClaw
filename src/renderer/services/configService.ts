@@ -40,14 +40,22 @@ export async function checkSystemEnvironment(): Promise<EnvironmentStatus> {
   else if (pf.includes('linux')) osName = 'Linux';
 
   if (isElectronEnvironment()) {
-    // [DESKTOP PACKAGING API]
-    // In Electron Desktop Mode, this is where we will invoke child_process
-    // to run `node -v` and `openclaw --version` via IPC.
-    // e.g. const nodeVersion = await window.electron.exec('node -v');
+    let nodeVersion = 'Unknown';
+    let nodeInstalled = false;
+    try {
+      const result = await window.electron.system.exec('node -v');
+      if (result.success && result.output) {
+        nodeVersion = result.output;
+        nodeInstalled = true;
+      }
+    } catch (e) {
+      // ignore error, node simply isn't installed
+    }
+
     return {
       os: osName,
       components: [
-        { name: 'Node.js', installed: true, version: 'v20.x (Desktop)', requiredVersion: '>=18.0.0' },
+        { name: 'Node.js', installed: nodeInstalled, version: nodeVersion, requiredVersion: '>=18.0.0' },
         { name: 'Gateway', installed: false, requiredVersion: 'latest' }
       ]
     };
@@ -69,7 +77,20 @@ export async function checkSystemEnvironment(): Promise<EnvironmentStatus> {
  */
 export async function checkOpenClawInstalled(): Promise<OpenClawInfo> {
   if (isElectronEnvironment()) {
-    // Electron mode would execute `openclaw --version`
+    try {
+      // Use openclaw -v to verify OpenClaw is installed
+      const result = await window.electron.system.exec('openclaw -v');
+      if (result.success && result.output) {
+        return {
+          installed: true,
+          version: result.output,
+          configPath: '~/.openclaw/openclaw.json',
+        };
+      }
+    } catch (e) {
+      // ignore and safely fall through to not installed
+    }
+    
     return {
       installed: false,
       version: '',

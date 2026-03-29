@@ -8,6 +8,12 @@ const dashboardAPI = {
   restartService: (): Promise<void> => ipcRenderer.invoke('dashboard:restart'),
 };
 
+const systemAPI = {
+  exec: (command: string): Promise<{ success: boolean; output: string | null; error?: string }> => 
+    ipcRenderer.invoke('system:exec', command),
+};
+
 contextBridge.exposeInMainWorld('electron', {
   dashboard: dashboardAPI,
+  system: systemAPI,
 });
