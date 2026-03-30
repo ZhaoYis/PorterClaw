@@ -45,8 +45,14 @@ export async function checkSystemEnvironment(): Promise<EnvironmentStatus> {
     try {
       const result = await window.electron.system.exec('node -v');
       if (result.success && result.output) {
-        nodeVersion = result.output;
-        nodeInstalled = true;
+        const match = result.output.match(/v?\d+\.\d+\.\d+/);
+        if (match) {
+          nodeVersion = match[0];
+          nodeInstalled = true;
+        } else {
+          nodeVersion = result.output.trim().split('\n').pop() || result.output;
+          nodeInstalled = true;
+        }
       }
     } catch (e) {
       console.error('Failed to check Node.js version:', e);
@@ -82,9 +88,11 @@ export async function checkOpenClawInstalled(): Promise<OpenClawInfo> {
       // Use openclaw --version to verify OpenClaw is installed
       const result = await window.electron.system.exec('openclaw --version');
       if (result.success && result.output) {
+        const match = result.output.match(/v?\d+\.\d+\.\d+/);
+        const versionStr = match ? match[0] : (result.output.trim().split('\n').pop() || result.output);
         return {
           installed: true,
-          version: result.output,
+          version: versionStr,
           configPath: '~/.openclaw/openclaw.json',
         };
       }
