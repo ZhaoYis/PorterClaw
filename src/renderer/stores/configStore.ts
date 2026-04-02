@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import type { ConfigStore, GatewayAction, OpenClawConfig } from '@common/types/config';
+import type { ConfigStore, GatewayAction, OpenClawConfig, SetupStep } from '@common/types/config';
 import {
   checkOpenClawInstalled,
   checkGatewayStatus,
   executeGatewayAction as execAction,
   loadOpenClawConfig,
+  saveOpenClawConfig,
+  getDefaultConfig,
   runDoctor as execDoctor,
 } from '../services/configService';
 
@@ -20,6 +22,8 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   isExecuting: false,
   commandOutput: '',
   error: null,
+  setupStep: null,
+  configDirty: false,
 
   checkInstallation: async () => {
     try {
@@ -61,8 +65,8 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
     });
   },
 
-  autoInstallOpenClaw: async (simulateError = false) => {
-    const { simulateAutoInstall } = await import('../services/configService');
+  autoInstallOpenClaw: async () => {
+    const { executeAutoInstall } = await import('../services/configService');
     
     set({
       installPhase: 'checking_prereqs',
@@ -73,16 +77,14 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
     });
 
     try {
-      await simulateAutoInstall(
+      await executeAutoInstall(
         (logLine) => set((state) => ({ installLogs: [...state.installLogs, logLine] })),
         (phase) => set({ installPhase: phase }),
-        simulateError
       );
 
-      // On success, refresh the ultimate status as if it really installed
       const info = await checkOpenClawInstalled();
       set({
-        installStatus: 'installed',
+        installStatus: info.installed ? 'installed' : 'not_installed',
         openclawInfo: info,
         isExecuting: false,
       });
@@ -104,7 +106,6 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       const output = await execAction(action);
       set({ commandOutput: output, isExecuting: false });
 
-      // Refresh gateway status after action
       const gwStatus = await checkGatewayStatus();
       set({ gatewayStatus: gwStatus });
     } catch (error) {
@@ -119,7 +120,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
     try {
       set({ isExecuting: true, error: null });
       const config = await loadOpenClawConfig();
-      set({ config, isExecuting: false });
+      set({ config, isExecuting: false, configDirty: false });
     } catch (error) {
       set({
         isExecuting: false,
@@ -140,15 +141,16 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       current = current[keys[i]];
     }
     current[keys[keys.length - 1]] = value;
-    set({ config: updated as OpenClawConfig });
+    set({ config: updated as OpenClawConfig, configDirty: true });
   },
 
   saveConfig: async () => {
+    const config = get().config;
+    if (!config) return;
     try {
       set({ isExecuting: true, error: null });
-      // In web mode, just log; Electron mode would write to file
-      console.log('Config saved:', get().config);
-      set({ isExecuting: false, commandOutput: 'Configuration saved successfully' });
+      await saveOpenClawConfig(config);
+      set({ isExecuting: false, commandOutput: 'Configuration saved successfully', configDirty: false });
     } catch (error) {
       set({
         isExecuting: false,
@@ -170,20 +172,36 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
     }
   },
 
-  importMigration: async (fileData: string) => {
+  importMigration: async () => {
     try {
       set({ isExecuting: true, error: null });
-      console.log('Importing migration data...', fileData.substring(0, 100));
-      // Simulate import
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      set({ isExecuting: false, commandOutput: 'Migration imported successfully' });
-    } catch (error) {
+      const { importMigrationZip } = await import('../services/migrateService');
+      const result = await importMigrationZip();
       set({
         isExecuting: false,
-        error: error instanceof Error ? error.message : 'Import failed',
+        commandOutput: `Migration imported: ${result.fileCount} files restored`,
       });
+    } catch (error) {
+      set({ isExecuting: false });
+      throw error;
     }
   },
 
   setError: (error) => set({ error }),
+
+  startSetupWizard: () => {
+    const config = get().config;
+    if (!config) {
+      set({ config: getDefaultConfig() });
+    }
+    set({ setupStep: 'gateway' });
+  },
+
+  setSetupStep: (step: SetupStep) => {
+    set({ setupStep: step });
+  },
+
+  closeSetupWizard: () => {
+    set({ setupStep: null });
+  },
 }));

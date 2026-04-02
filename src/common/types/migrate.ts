@@ -1,10 +1,11 @@
-export type MigrateStatus = 'idle' | 'packing' | 'done' | 'error';
+export type MigrateStatus = 'idle' | 'scanning' | 'packing' | 'done' | 'error';
 
-export interface MigrateOptions {
-  includeConfig: boolean;
-  includeLogs: boolean;
-  includeData: boolean;
-  includeSkills: boolean;
+export interface MigrateCategory {
+  key: string;
+  fileCount: number;
+  totalSize: number;
+  path: string;
+  files: string[];
 }
 
 export interface MigratePackage {
@@ -12,20 +13,37 @@ export interface MigratePackage {
   filename: string;
   createdAt: string;
   size: string;
-  options: MigrateOptions;
+  filePath: string;
+  categories: string[];
+}
+
+export interface MigratePackResult {
+  filePath: string;
+  filename: string;
+  size: number;
+  categories: string[];
+}
+
+export interface MigrateImportResult {
+  success: boolean;
+  restoredCategories: string[];
+  fileCount: number;
+  error?: string;
 }
 
 export interface MigrateState {
   status: MigrateStatus;
   progress: number;
-  options: MigrateOptions;
+  selectedCategories: Record<string, boolean>;
+  categories: MigrateCategory[];
   packages: MigratePackage[];
   currentPackage: MigratePackage | null;
   error: string | null;
 }
 
 export interface MigrateActions {
-  setOption: (key: keyof MigrateOptions, value: boolean) => void;
+  scanFiles: () => Promise<void>;
+  toggleCategory: (key: string, value: boolean) => void;
   startPacking: () => Promise<void>;
   loadPackages: () => Promise<void>;
   deletePackage: (id: string) => Promise<void>;
@@ -34,3 +52,11 @@ export interface MigrateActions {
 }
 
 export type MigrateStore = MigrateState & MigrateActions;
+
+export interface MigrateAPI {
+  scan: () => Promise<{ success: boolean; categories: MigrateCategory[]; error?: string }>;
+  pack: (categories: string[]) => Promise<{ success: boolean; filePath?: string; filename?: string; size?: number; error?: string }>;
+  importZip: () => Promise<{ success: boolean; restoredCategories?: string[]; fileCount?: number; error?: string }>;
+  onProgress: (callback: (progress: number) => void) => void;
+  removeProgressListener: () => void;
+}

@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as net from 'net';
+import { logger } from '../logger';
 
 const execAsync = promisify(exec);
 
@@ -76,23 +77,35 @@ export async function checkGatewayPort(port: number = GATEWAY_DEFAULT_PORT): Pro
  * Get Gateway status (unified interface)
  * Checks both process and port, returns running if either is true
  */
+let lastReportedStatus: GatewayStatus = 'unknown';
+
 export async function getGatewayStatus(): Promise<GatewayStatus> {
   try {
-    // Check process first
     const processRunning = await checkGatewayProcess();
     if (processRunning) {
+      if (lastReportedStatus !== 'running') {
+        logger.info('Gateway detected as running (process found)', 'monitor');
+        lastReportedStatus = 'running';
+      }
       return 'running';
     }
 
-    // Check port as fallback
     const portInUse = await checkGatewayPort();
     if (portInUse) {
+      if (lastReportedStatus !== 'running') {
+        logger.info('Gateway detected as running (port in use)', 'monitor');
+        lastReportedStatus = 'running';
+      }
       return 'running';
     }
 
+    if (lastReportedStatus !== 'stopped') {
+      logger.info('Gateway detected as stopped', 'monitor');
+      lastReportedStatus = 'stopped';
+    }
     return 'stopped';
   } catch (error) {
-    console.error('Error checking Gateway status:', error);
+    logger.error(`Error checking Gateway status: ${(error as Error).message}`, 'monitor');
     return 'unknown';
   }
 }

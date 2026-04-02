@@ -1,16 +1,15 @@
 import { create } from 'zustand';
 import type { LogsStore, LogEntry, LogFilter } from '@common/types/logs';
-import { fetchLogs, downloadLogs } from '../services/logsService';
+import { fetchLogs, clearLogsRemote, exportLogsRemote, downloadLogs } from '../services/logsService';
+import { isElectronEnvironment } from '../services/monitoringService';
 
 function applyFilter(entries: LogEntry[], filter: LogFilter): LogEntry[] {
   let result = [...entries];
 
-  // Level filter
   if (filter.level !== 'all') {
     result = result.filter((e) => e.level === filter.level);
   }
 
-  // Time range filter
   if (filter.timeRange !== 'all') {
     const now = Date.now();
     const ranges: Record<string, number> = {
@@ -23,7 +22,6 @@ function applyFilter(entries: LogEntry[], filter: LogFilter): LogEntry[] {
     result = result.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
   }
 
-  // Search filter
   if (filter.search.trim()) {
     const search = filter.search.toLowerCase();
     result = result.filter(
@@ -51,9 +49,23 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
   loadLogs: async () => {
     try {
       set({ isLoading: true, error: null });
-      const entries = await fetchLogs();
-      const filtered = applyFilter(entries, get().filter);
-      set({ entries, filteredEntries: filtered, isLoading: false });
+      const filter = get().filter;
+
+      if (isElectronEnvironment()) {
+        // In Electron, push filtering to SQLite for efficiency
+        const entries = await fetchLogs({
+          level: filter.level === 'all' ? undefined : filter.level,
+          timeRange: filter.timeRange === 'all' ? undefined : filter.timeRange,
+          search: filter.search || undefined,
+          limit: 2000,
+        });
+        set({ entries, filteredEntries: entries, isLoading: false });
+      } else {
+        // Web mode: fetch all then filter client-side
+        const entries = await fetchLogs();
+        const filtered = applyFilter(entries, filter);
+        set({ entries, filteredEntries: filtered, isLoading: false });
+      }
     } catch (error) {
       set({
         isLoading: false,
@@ -64,16 +76,52 @@ export const useLogsStore = create<LogsStore>((set, get) => ({
 
   setFilter: (partial) => {
     const filter = { ...get().filter, ...partial };
-    const filtered = applyFilter(get().entries, filter);
-    set({ filter, filteredEntries: filtered });
+    set({ filter });
+
+    // Re-fetch from database with new filter
+    const store = get();
+    if (isElectronEnvironment()) {
+      store.loadLogs();
+    } else {
+      const filtered = applyFilter(store.entries, filter);
+      set({ filteredEntries: filtered });
+    }
   },
 
-  clearLogs: () => {
-    set({ entries: [], filteredEntries: [] });
+  clearLogs: async () => {
+    try {
+      await clearLogsRemote();
+      set({ entries: [], filteredEntries: [] });
+    } catch {
+      set({ entries: [], filteredEntries: [] });
+    }
   },
 
-  exportLogs: () => {
-    downloadLogs(get().filteredEntries);
+  exportLogs: async () => {
+    try {
+      if (isElectronEnvironment()) {
+        const filter = get().filter;
+        const text = await exportLogsRemote({
+          level: filter.level === 'all' ? undefined : filter.level,
+          timeRange: filter.timeRange === 'all' ? undefined : filter.timeRange,
+          search: filter.search || undefined,
+        });
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `openclaw-logs-${new Date().toISOString().slice(0, 10)}.log`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        downloadLogs(get().filteredEntries);
+      }
+    } catch {
+      downloadLogs(get().filteredEntries);
+    }
   },
 
   toggleAutoScroll: () => {

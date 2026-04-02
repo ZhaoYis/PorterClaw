@@ -33,10 +33,35 @@ export interface GatewayConfig {
   daemon: boolean;
 }
 
+export type ProviderType = 'openai' | 'anthropic' | 'azure' | 'local' | 'custom';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+export interface ProviderConfig {
+  type: ProviderType;
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+}
+
+export interface SkillsConfig {
+  directory: string;
+  autoLoad: boolean;
+}
+
+export interface LoggingConfig {
+  level: LogLevel;
+  file: string;
+}
+
 export interface OpenClawConfig {
   gateway: GatewayConfig;
+  provider: ProviderConfig;
+  skills: SkillsConfig;
+  logging: LoggingConfig;
   [key: string]: unknown;
 }
+
+export type SetupStep = 'gateway' | 'provider' | 'advanced' | 'review';
 
 export interface ConfigState {
   installStatus: InstallStatus;
@@ -50,20 +75,25 @@ export interface ConfigState {
   isExecuting: boolean;
   commandOutput: string;
   error: string | null;
+  setupStep: SetupStep | null;
+  configDirty: boolean;
 }
 
 export interface ConfigActions {
   checkInstallation: () => Promise<void>;
   assessEnvironment: () => Promise<void>;
-  autoInstallOpenClaw: (simulateError?: boolean) => Promise<void>;
+  autoInstallOpenClaw: () => Promise<void>;
   resetInstallState: () => void;
   executeGatewayAction: (action: GatewayAction) => Promise<void>;
   loadConfig: () => Promise<void>;
   updateConfigField: (key: string, value: unknown) => void;
   saveConfig: () => Promise<void>;
   runDoctor: () => Promise<void>;
-  importMigration: (fileData: string) => Promise<void>;
+  importMigration: () => Promise<void>;
   setError: (error: string | null) => void;
+  startSetupWizard: () => void;
+  setSetupStep: (step: SetupStep) => void;
+  closeSetupWizard: () => void;
 }
 
 export type ConfigStore = ConfigState & ConfigActions;

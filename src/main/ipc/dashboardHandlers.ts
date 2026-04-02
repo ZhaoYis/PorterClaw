@@ -1,5 +1,8 @@
 import { ipcMain, app } from 'electron';
-import { SystemStatus, ResourceMetrics } from '@common/types/dashboard';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import os from 'os';
+import { SystemStatus, ResourceMetrics, EnvironmentCheckResult } from '@common/types/dashboard';
 import {
   getGatewayStatus,
   getNodeStatus,
@@ -7,12 +10,12 @@ import {
   getActiveSkillsCount,
   getMockSkillsCount,
 } from '../monitoring';
+import { logger } from '../logger';
+
+const execAsync = promisify(exec);
 
 let appStartTime = Date.now();
 
-/**
- * Format uptime in seconds to human-readable format
- */
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -20,15 +23,29 @@ function formatUptime(seconds: number): string {
   return `${days}d ${hours}h ${minutes}m`;
 }
 
-/**
- * Get system status from real monitoring data
- */
+function getLoginShell(): string {
+  return process.env.SHELL || '/bin/bash';
+}
+
+async function execInShell(command: string): Promise<string> {
+  try {
+    const { stdout } = await execAsync(command);
+    return stdout.trim();
+  } catch {
+    if (os.platform() === 'darwin' || os.platform() === 'linux') {
+      const shell = getLoginShell();
+      const { stdout } = await execAsync(`${shell} -lc "${command}"`);
+      return stdout.trim();
+    }
+    throw new Error(`Command failed: ${command}`);
+  }
+}
+
 async function getSystemStatus(): Promise<SystemStatus> {
   try {
     const gatewayStatus = await getGatewayStatus();
     const nodeStatus = await getNodeStatus();
 
-    // Determine overall status
     let overall: 'running' | 'stopped' | 'error';
     if (gatewayStatus === 'running') {
       overall = 'running';
@@ -53,19 +70,12 @@ async function getSystemStatus(): Promise<SystemStatus> {
   }
 }
 
-/**
- * Get resource metrics from real monitoring data
- */
 async function getResourceMetrics(): Promise<ResourceMetrics> {
   try {
     const uptimeSeconds = Math.floor((Date.now() - appStartTime) / 1000);
-
-    // Get memory info
     const memoryInfo = getMemoryInfo();
 
-    // Get active skills count
     let activeSkills = await getActiveSkillsCount();
-    // If Gateway not available, use mock for demo
     if (activeSkills === 0) {
       activeSkills = getMockSkillsCount();
     }
@@ -83,7 +93,6 @@ async function getResourceMetrics(): Promise<ResourceMetrics> {
     };
   } catch (error) {
     console.error('Error getting resource metrics:', error);
-    // Return fallback data
     const uptimeSeconds = Math.floor((Date.now() - appStartTime) / 1000);
     return {
       version: app.getVersion(),
@@ -99,6 +108,48 @@ async function getResourceMetrics(): Promise<ResourceMetrics> {
   }
 }
 
+async function checkEnvironment(): Promise<EnvironmentCheckResult> {
+  const components: EnvironmentCheckResult['components'] = [];
+
+  let nodeInstalled = false;
+  let nodeVersion: string | undefined;
+  try {
+    const output = await execInShell('node -v');
+    const match = output.match(/v?\d+\.\d+\.\d+/);
+    if (match) {
+      nodeInstalled = true;
+      nodeVersion = match[0];
+    }
+  } catch { /* not installed */ }
+  components.push({ name: 'Node.js', installed: nodeInstalled, version: nodeVersion });
+
+  let openclawInstalled = false;
+  let openclawVersion: string | undefined;
+  try {
+    const output = await execInShell('openclaw --version');
+    const match = output.match(/v?\d+\.\d+\.\d+/);
+    if (match) {
+      openclawInstalled = true;
+      openclawVersion = match[0];
+    } else if (output.length > 0) {
+      openclawInstalled = true;
+      openclawVersion = output.split('\n').pop();
+    }
+  } catch { /* not installed */ }
+  components.push({ name: 'OpenClaw CLI', installed: openclawInstalled, version: openclawVersion });
+
+  const allInstalled = components.every((c) => c.installed);
+  const missing = components.filter((c) => !c.installed).map((c) => c.name);
+
+  return {
+    ok: allInstalled,
+    components,
+    message: allInstalled
+      ? undefined
+      : `Missing: ${missing.join(', ')}`,
+  };
+}
+
 export function registerDashboardHandlers(): void {
   ipcMain.handle('dashboard:status', async (): Promise<SystemStatus> => {
     return getSystemStatus();
@@ -108,14 +159,42 @@ export function registerDashboardHandlers(): void {
     return getResourceMetrics();
   });
 
+  ipcMain.handle('dashboard:check-env', async (): Promise<EnvironmentCheckResult> => {
+    return checkEnvironment();
+  });
+
+  ipcMain.handle('dashboard:start', async (): Promise<void> => {
+    logger.info('Gateway start requested', 'gateway');
+    try {
+      await execInShell('openclaw gateway start');
+      appStartTime = Date.now();
+      logger.info('Gateway started successfully', 'gateway');
+    } catch (error) {
+      logger.error(`Failed to start gateway: ${(error as Error).message}`, 'gateway');
+      throw new Error(`Failed to start gateway: ${(error as Error).message}`);
+    }
+  });
+
   ipcMain.handle('dashboard:stop', async (): Promise<void> => {
-    // In a real implementation, this would send a stop command to Gateway
-    console.log('Stop service requested');
+    logger.info('Gateway stop requested', 'gateway');
+    try {
+      await execInShell('openclaw gateway stop');
+      logger.info('Gateway stopped successfully', 'gateway');
+    } catch (error) {
+      logger.error(`Failed to stop gateway: ${(error as Error).message}`, 'gateway');
+      throw new Error(`Failed to stop gateway: ${(error as Error).message}`);
+    }
   });
 
   ipcMain.handle('dashboard:restart', async (): Promise<void> => {
-    // In a real implementation, this would send a restart command to Gateway
-    console.log('Restart service requested');
-    appStartTime = Date.now();
+    logger.info('Gateway restart requested', 'gateway');
+    try {
+      await execInShell('openclaw gateway restart');
+      appStartTime = Date.now();
+      logger.info('Gateway restarted successfully', 'gateway');
+    } catch (error) {
+      logger.error(`Failed to restart gateway: ${(error as Error).message}`, 'gateway');
+      throw new Error(`Failed to restart gateway: ${(error as Error).message}`);
+    }
   });
 }

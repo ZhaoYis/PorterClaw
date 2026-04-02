@@ -15,14 +15,21 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useTranslation } from '../i18n/translations';
 
 export const QuickActions: React.FC = React.memo(() => {
-  const { stopService, restartService, openConfig, isLoading, status } = useDashboardStore();
+  const {
+    startService,
+    stopService,
+    restartService,
+    openConfig,
+    isLoading,
+    status,
+    clearEnvCheck,
+  } = useDashboardStore();
   const language = useSettingsStore((s) => s.settings.language);
   const { t } = useTranslation(language);
   const [modal, contextHolder] = Modal.useModal();
   const [messageApi, msgContextHolder] = message.useMessage();
-  const [actionInProgress, setActionInProgress] = useState<'stop' | 'restart' | null>(null);
+  const [actionInProgress, setActionInProgress] = useState<'stop' | 'start' | 'restart' | null>(null);
 
-  const isRunning = status.overall === 'running' || status.gateway === 'running';
   const isStopped = status.overall === 'stopped' && status.gateway === 'stopped';
 
   const handleStop = useCallback(() => {
@@ -62,18 +69,79 @@ export const QuickActions: React.FC = React.memo(() => {
     });
   }, [modal, stopService, isStopped, messageApi, language, t]);
 
-  const handleRestart = useCallback(() => {
-    const title = isRunning
-      ? (language === 'zh' ? '确认重启服务' : 'Confirm Restart Service')
-      : (language === 'zh' ? '确认启动服务' : 'Confirm Start Service');
-
-    const content = isRunning
-      ? (language === 'zh' ? '重启服务期间会有短暂的服务中断。确定要重启吗？' : 'Restarting will cause a brief service interruption. Continue?')
-      : (language === 'zh' ? '服务当前未运行，将尝试启动服务。' : 'Service is currently stopped. Attempt to start?');
-
+  const handleStart = useCallback(() => {
     modal.confirm({
-      title,
-      content,
+      title: language === 'zh' ? '确认启动服务' : 'Confirm Start Service',
+      content: language === 'zh'
+        ? '将检查运行环境并尝试启动 OpenClaw Gateway 服务。'
+        : 'Environment will be checked and OpenClaw Gateway will be started.',
+      icon: <ExclamationCircleOutlined />,
+      okText: t('common.confirm'),
+      cancelText: t('common.cancel'),
+      onOk: async () => {
+        setActionInProgress('start');
+        try {
+          await startService();
+          const store = useDashboardStore.getState();
+          if (store.envCheck && !store.envCheck.ok) {
+            const missing = store.envCheck.components
+              .filter((c) => !c.installed)
+              .map((c) => c.name)
+              .join(', ');
+            Modal.error({
+              title: language === 'zh' ? '环境检查未通过' : 'Environment Check Failed',
+              content: (
+                <div>
+                  <p>
+                    {language === 'zh'
+                      ? `以下组件未安装：${missing}`
+                      : `Missing components: ${missing}`}
+                  </p>
+                  <ul style={{ paddingLeft: 20, marginTop: 8 }}>
+                    {store.envCheck.components.map((c) => (
+                      <li key={c.name} style={{ color: c.installed ? '#52c41a' : '#ff4d4f' }}>
+                        {c.name}: {c.installed
+                          ? `${language === 'zh' ? '已安装' : 'Installed'} (${c.version || 'unknown'})`
+                          : (language === 'zh' ? '未安装' : 'Not Installed')}
+                      </li>
+                    ))}
+                  </ul>
+                  <p style={{ marginTop: 12, color: '#faad14' }}>
+                    {language === 'zh'
+                      ? '请前往「配置」页面安装缺失的组件。'
+                      : 'Please go to Config page to install missing components.'}
+                  </p>
+                </div>
+              ),
+              okText: language === 'zh' ? '前往配置' : 'Go to Config',
+              onOk: () => {
+                clearEnvCheck();
+                openConfig();
+              },
+            });
+          } else {
+            messageApi.success({
+              content: language === 'zh' ? '服务已启动' : 'Service started successfully',
+              icon: <CheckCircleOutlined />,
+            });
+          }
+        } catch {
+          messageApi.error({
+            content: language === 'zh' ? '启动服务失败' : 'Failed to start service',
+          });
+        } finally {
+          setActionInProgress(null);
+        }
+      },
+    });
+  }, [modal, startService, messageApi, language, t, clearEnvCheck, openConfig]);
+
+  const handleRestart = useCallback(() => {
+    modal.confirm({
+      title: language === 'zh' ? '确认重启服务' : 'Confirm Restart Service',
+      content: language === 'zh'
+        ? '重启服务期间会有短暂的服务中断，将先检查运行环境。确定要重启吗？'
+        : 'Restarting will cause a brief interruption. Environment will be checked first. Continue?',
       icon: <ExclamationCircleOutlined />,
       okText: t('common.confirm'),
       cancelText: t('common.cancel'),
@@ -81,22 +149,59 @@ export const QuickActions: React.FC = React.memo(() => {
         setActionInProgress('restart');
         try {
           await restartService();
-          messageApi.success({
-            content: isRunning
-              ? (language === 'zh' ? '服务已重启' : 'Service restarted successfully')
-              : (language === 'zh' ? '服务已启动' : 'Service started successfully'),
-            icon: <CheckCircleOutlined />,
-          });
+          const store = useDashboardStore.getState();
+          if (store.envCheck && !store.envCheck.ok) {
+            const missing = store.envCheck.components
+              .filter((c) => !c.installed)
+              .map((c) => c.name)
+              .join(', ');
+            Modal.error({
+              title: language === 'zh' ? '环境检查未通过' : 'Environment Check Failed',
+              content: (
+                <div>
+                  <p>
+                    {language === 'zh'
+                      ? `以下组件未安装：${missing}`
+                      : `Missing components: ${missing}`}
+                  </p>
+                  <ul style={{ paddingLeft: 20, marginTop: 8 }}>
+                    {store.envCheck.components.map((c) => (
+                      <li key={c.name} style={{ color: c.installed ? '#52c41a' : '#ff4d4f' }}>
+                        {c.name}: {c.installed
+                          ? `${language === 'zh' ? '已安装' : 'Installed'} (${c.version || 'unknown'})`
+                          : (language === 'zh' ? '未安装' : 'Not Installed')}
+                      </li>
+                    ))}
+                  </ul>
+                  <p style={{ marginTop: 12, color: '#faad14' }}>
+                    {language === 'zh'
+                      ? '请前往「配置」页面安装缺失的组件。'
+                      : 'Please go to Config page to install missing components.'}
+                  </p>
+                </div>
+              ),
+              okText: language === 'zh' ? '前往配置' : 'Go to Config',
+              onOk: () => {
+                clearEnvCheck();
+                openConfig();
+              },
+            });
+          } else {
+            messageApi.success({
+              content: language === 'zh' ? '服务已重启' : 'Service restarted successfully',
+              icon: <CheckCircleOutlined />,
+            });
+          }
         } catch {
           messageApi.error({
-            content: language === 'zh' ? '操作失败' : 'Operation failed',
+            content: language === 'zh' ? '重启服务失败' : 'Failed to restart service',
           });
         } finally {
           setActionInProgress(null);
         }
       },
     });
-  }, [modal, restartService, isRunning, messageApi, language, t]);
+  }, [modal, restartService, messageApi, language, t, clearEnvCheck, openConfig]);
 
   const handleConfig = useCallback(() => {
     openConfig();
@@ -119,27 +224,32 @@ export const QuickActions: React.FC = React.memo(() => {
           {isStopped && <span className="action-hint">{language === 'zh' ? '已停止' : 'Inactive'}</span>}
         </button>
 
-        {/* Restart/Start Button — primary, always available */}
-        <button
-          className="action-btn primary"
-          onClick={handleRestart}
-          disabled={isLoading || actionInProgress !== null}
-        >
-          <span className="action-icon">
-            {actionInProgress === 'restart' ? (
-              <LoadingOutlined spin />
-            ) : isRunning ? (
-              <ReloadOutlined />
-            ) : (
-              <CaretRightOutlined />
-            )}
-          </span>
-          <span className="action-label">
-            {isRunning ? t('dashboard.restart') : (language === 'zh' ? '启动' : 'Start')}
-          </span>
-        </button>
+        {/* Start / Restart Button */}
+        {isStopped ? (
+          <button
+            className="action-btn primary"
+            onClick={handleStart}
+            disabled={isLoading || actionInProgress !== null}
+          >
+            <span className="action-icon">
+              {actionInProgress === 'start' ? <LoadingOutlined spin /> : <CaretRightOutlined />}
+            </span>
+            <span className="action-label">{language === 'zh' ? '启动' : 'Start'}</span>
+          </button>
+        ) : (
+          <button
+            className="action-btn primary"
+            onClick={handleRestart}
+            disabled={isLoading || actionInProgress !== null}
+          >
+            <span className="action-icon">
+              {actionInProgress === 'restart' ? <LoadingOutlined spin /> : <ReloadOutlined />}
+            </span>
+            <span className="action-label">{t('dashboard.restart')}</span>
+          </button>
+        )}
 
-        {/* Config Button — navigates to Config page */}
+        {/* Config Button */}
         <button
           className="action-btn"
           onClick={handleConfig}

@@ -30,16 +30,18 @@ export const GatewayControl: React.FC = React.memo(() => {
       ? 'stopped'
       : 'unknown';
 
-  const statusLabel =
+  const statusLabelKey =
     gatewayStatus === 'running'
-      ? 'Running'
+      ? 'config.statusRunning' as const
       : gatewayStatus === 'stopped'
-      ? 'Stopped'
+      ? 'config.statusStopped' as const
       : gatewayStatus === 'starting'
-      ? 'Starting...'
+      ? 'config.statusStarting' as const
       : gatewayStatus === 'stopping'
-      ? 'Stopping...'
-      : 'Unknown';
+      ? 'config.statusStopping' as const
+      : 'config.statusUnknown' as const;
+
+  const statusLabel = t(statusLabelKey);
 
   return (
     <div className="config-section">

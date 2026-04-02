@@ -28,91 +28,158 @@ const initialMetrics: ResourceMetrics = {
   activeSkills: 0,
 };
 
+let loadingCount = 0;
+
+function beginLoading(set: (partial: Partial<DashboardStore>) => void): void {
+  loadingCount++;
+  set({ isLoading: true, error: null });
+}
+
+function endLoading(set: (partial: Partial<DashboardStore>) => void): void {
+  loadingCount = Math.max(0, loadingCount - 1);
+  if (loadingCount === 0) {
+    set({ isLoading: false });
+  }
+}
+
 export const useDashboardStore = create<DashboardStore>((set, get) => ({
   status: initialStatus,
   metrics: initialMetrics,
   isLoading: false,
   error: null,
+  envCheck: null,
 
   refreshStatus: async () => {
     try {
-      set({ isLoading: true, error: null });
+      beginLoading(set);
       const status = await dashboardService.getStatus();
-      set({ status, isLoading: false });
+      set({ status });
     } catch (error) {
       console.error('Failed to refresh status:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch status',
-        isLoading: false,
       });
+    } finally {
+      endLoading(set);
     }
   },
 
   refreshMetrics: async () => {
     try {
-      set({ isLoading: true, error: null });
+      beginLoading(set);
       const metrics = await dashboardService.getMetrics();
       set({
         metrics: {
           ...metrics,
           uptimeFormatted: formatUptime(metrics.uptime),
         },
-        isLoading: false,
       });
     } catch (error) {
       console.error('Failed to refresh metrics:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch metrics',
-        isLoading: false,
       });
+    } finally {
+      endLoading(set);
+    }
+  },
+
+  startService: async () => {
+    const currentStatus = get().status;
+
+    if (currentStatus.gateway === 'running' && currentStatus.overall === 'running') {
+      set({ error: 'Service is already running' });
+      return;
+    }
+
+    try {
+      beginLoading(set);
+
+      const envResult = await dashboardService.checkEnvironment();
+      set({ envCheck: envResult });
+
+      if (!envResult.ok) {
+        set({
+          error: envResult.message || 'Environment check failed',
+        });
+        endLoading(set);
+        return;
+      }
+
+      await dashboardService.startService();
+      set({ envCheck: null });
+
+      const status = await dashboardService.getStatus();
+      const metrics = await dashboardService.getMetrics();
+      set({
+        status,
+        metrics: { ...metrics, uptimeFormatted: formatUptime(metrics.uptime) },
+      });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to start service',
+      });
+    } finally {
+      endLoading(set);
     }
   },
 
   stopService: async () => {
     const currentStatus = get().status;
 
-    // Check if service is already stopped
     if (currentStatus.gateway === 'stopped' && currentStatus.overall === 'stopped') {
       set({ error: 'Service is already stopped' });
       return;
     }
 
     try {
-      set({ isLoading: true, error: null });
+      beginLoading(set);
       await dashboardService.stopService();
-      // Refresh both status and metrics after stop
       const status = await dashboardService.getStatus();
       const metrics = await dashboardService.getMetrics();
       set({
         status,
         metrics: { ...metrics, uptimeFormatted: formatUptime(metrics.uptime) },
-        isLoading: false,
       });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to stop service',
-        isLoading: false,
       });
+    } finally {
+      endLoading(set);
     }
   },
 
   restartService: async () => {
     try {
-      set({ isLoading: true, error: null });
+      beginLoading(set);
+
+      const envResult = await dashboardService.checkEnvironment();
+      set({ envCheck: envResult });
+
+      if (!envResult.ok) {
+        set({
+          error: envResult.message || 'Environment check failed',
+        });
+        endLoading(set);
+        return;
+      }
+
       await dashboardService.restartService();
-      // Refresh both status and metrics after restart
+      set({ envCheck: null });
+
       const status = await dashboardService.getStatus();
       const metrics = await dashboardService.getMetrics();
       set({
         status,
         metrics: { ...metrics, uptimeFormatted: formatUptime(metrics.uptime) },
-        isLoading: false,
       });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to restart service',
-        isLoading: false,
       });
+    } finally {
+      endLoading(set);
     }
   },
 
@@ -121,4 +188,6 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   },
 
   setError: (error) => set({ error }),
+
+  clearEnvCheck: () => set({ envCheck: null }),
 }));

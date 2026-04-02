@@ -27,8 +27,8 @@ export interface LogsState {
 export interface LogsActions {
   loadLogs: () => Promise<void>;
   setFilter: (filter: Partial<LogFilter>) => void;
-  clearLogs: () => void;
-  exportLogs: () => void;
+  clearLogs: () => Promise<void>;
+  exportLogs: () => Promise<void>;
   toggleAutoScroll: () => void;
   setError: (error: string | null) => void;
 }

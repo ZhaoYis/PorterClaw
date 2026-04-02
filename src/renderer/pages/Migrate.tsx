@@ -10,31 +10,45 @@ import {
   DownloadOutlined,
   DeleteOutlined,
   LoadingOutlined,
+  FolderOutlined,
+  ScanOutlined,
+  BookOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { useMigrateStore } from '../stores/migrateStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useTranslation } from '../i18n/translations';
-import type { MigrateOptions } from '@common/types/migrate';
 import '../styles/migrate.css';
 
-const optionConfig: Array<{
-  key: keyof MigrateOptions;
-  labelKey: string;
-  icon: React.ReactNode;
-}> = [
-  { key: 'includeConfig', labelKey: 'migrate.includeConfig', icon: <SettingOutlined /> },
-  { key: 'includeLogs', labelKey: 'migrate.includeLogs', icon: <FileTextOutlined /> },
-  { key: 'includeData', labelKey: 'migrate.includeData', icon: <DatabaseOutlined /> },
-  { key: 'includeSkills', labelKey: 'migrate.includeSkills', icon: <AppstoreOutlined /> },
-];
+const categoryIcons: Record<string, React.ReactNode> = {
+  config: <SettingOutlined />,
+  skills: <AppstoreOutlined />,
+  logs: <FileTextOutlined />,
+  data: <DatabaseOutlined />,
+  cache: <FolderOutlined />,
+  plugins: <AppstoreOutlined />,
+  templates: <FolderOutlined />,
+  backups: <FolderOutlined />,
+  memory: <BookOutlined />,
+  agents: <RobotOutlined />,
+};
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
 
 const Migrate: React.FC = () => {
   const {
     status,
     progress,
-    options,
+    categories,
+    selectedCategories,
     packages,
-    setOption,
+    scanFiles,
+    toggleCategory,
     startPacking,
     loadPackages,
     deletePackage,
@@ -44,8 +58,9 @@ const Migrate: React.FC = () => {
   const { t } = useTranslation(language);
 
   useEffect(() => {
+    scanFiles();
     loadPackages();
-  }, [loadPackages]);
+  }, [scanFiles, loadPackages]);
 
   const handlePack = useCallback(() => {
     startPacking();
@@ -60,39 +75,67 @@ const Migrate: React.FC = () => {
   }, []);
 
   const isPacking = status === 'packing';
+  const isScanning = status === 'scanning';
   const isDone = status === 'done';
-  const hasAnyOption = Object.values(options).some(Boolean);
+  const hasAnySelected = Object.values(selectedCategories).some(Boolean);
+
+  const getCategoryLabel = (key: string): string => {
+    const translationKey = `migrate.cat${key.charAt(0).toUpperCase()}${key.slice(1)}` as any;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : key;
+  };
 
   return (
     <div className="migrate-page">
       <h2>{t('migrate.title')}</h2>
       <p className="migrate-desc">{t('migrate.description')}</p>
 
-      {/* Package Options */}
+      {/* Category Selection */}
       <div className="migrate-section">
-        <div className="migrate-section-title">{t('migrate.packageOptions')}</div>
-
-        <div className="migrate-options">
-          {optionConfig.map((opt) => (
-            <div key={opt.key} className="migrate-option">
-              <div className="migrate-option-info">
-                <span className="migrate-option-icon">{opt.icon}</span>
-                <span className="migrate-option-label">{t(opt.labelKey as any)}</span>
-              </div>
-              <Switch
-                size="small"
-                checked={options[opt.key]}
-                onChange={(checked) => setOption(opt.key, checked)}
-                disabled={isPacking}
-              />
-            </div>
-          ))}
+        <div className="migrate-section-title">
+          {t('migrate.packageOptions')}
+          {isScanning && <LoadingOutlined style={{ marginLeft: 8 }} />}
         </div>
+
+        {categories.length === 0 && !isScanning ? (
+          <div className="migrate-empty">
+            <ScanOutlined style={{ fontSize: 20, marginRight: 8 }} />
+            {t('migrate.noFiles')}
+          </div>
+        ) : (
+          <div className="migrate-options">
+            {categories.map((cat) => (
+              <div key={cat.key} className="migrate-option">
+                <div className="migrate-option-left">
+                  <span className="migrate-option-icon">
+                    {categoryIcons[cat.key] || <FolderOutlined />}
+                  </span>
+                  <div className="migrate-option-details">
+                    <span className="migrate-option-label">{getCategoryLabel(cat.key)}</span>
+                    <div className="migrate-option-meta">
+                      <span>{cat.fileCount} {t('migrate.filesUnit')}</span>
+                      <span className="migrate-meta-sep">·</span>
+                      <span>{formatSize(cat.totalSize)}</span>
+                      <span className="migrate-meta-sep">·</span>
+                      <span className="migrate-option-path">{cat.path}</span>
+                    </div>
+                  </div>
+                </div>
+                <Switch
+                  size="small"
+                  checked={selectedCategories[cat.key] ?? true}
+                  onChange={(checked) => toggleCategory(cat.key, checked)}
+                  disabled={isPacking}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           className="migrate-pack-btn"
           onClick={handlePack}
-          disabled={isPacking || !hasAnyOption}
+          disabled={isPacking || isScanning || !hasAnySelected}
         >
           {isPacking ? (
             <>

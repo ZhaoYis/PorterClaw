@@ -5,9 +5,10 @@ type TranslationKey =
   | 'nav.dashboard' | 'nav.config' | 'nav.logs' | 'nav.migrate' | 'nav.settings'
   // Dashboard
   | 'dashboard.running' | 'dashboard.stopped' | 'dashboard.version' | 'dashboard.uptime'
-  | 'dashboard.stop' | 'dashboard.restart' | 'dashboard.config'
+  | 'dashboard.stop' | 'dashboard.start' | 'dashboard.restart' | 'dashboard.config'
   | 'dashboard.gateway' | 'dashboard.node' | 'dashboard.memory' | 'dashboard.activeSkills'
   | 'dashboard.connected' | 'dashboard.disconnected'
+  | 'dashboard.envCheckFailed' | 'dashboard.envMissing' | 'dashboard.goToConfig'
   // Config
   | 'config.title' | 'config.installCheck' | 'config.notInstalled' | 'config.installed'
   | 'config.installGuide' | 'config.installCommand' | 'config.copyCommand'
@@ -24,16 +25,32 @@ type TranslationKey =
   | 'config.phase.error' | 'config.solution' | 'config.retry' | 'config.simulateError'
   | 'config.envCheck' | 'config.os' | 'config.installedVersion' | 'config.requiredVersion'
   | 'config.envInstalled' | 'config.envMissing' | 'config.refreshEnv'
+  | 'config.statusRunning' | 'config.statusStopped' | 'config.statusStarting'
+  | 'config.statusStopping' | 'config.statusUnknown'
+  | 'config.startConfigure' | 'config.setupWizard' | 'config.setupDesc'
+  | 'config.stepGateway' | 'config.stepProvider' | 'config.stepAdvanced' | 'config.stepReview'
+  | 'config.stepGatewayDesc' | 'config.stepProviderDesc' | 'config.stepAdvancedDesc' | 'config.stepReviewDesc'
+  | 'config.authToken' | 'config.providerType' | 'config.apiKey' | 'config.baseUrl' | 'config.model'
+  | 'config.skillsDir' | 'config.autoLoadSkills' | 'config.logLevel' | 'config.logFile'
+  | 'config.providerOpenai' | 'config.providerAnthropic' | 'config.providerAzure'
+  | 'config.providerLocal' | 'config.providerCustom'
+  | 'config.nextStep' | 'config.prevStep' | 'config.saveAndStart' | 'config.skipSetup'
+  | 'config.configPreview' | 'config.configSaved'
+  | 'config.sectionGateway' | 'config.sectionProvider' | 'config.sectionSkills' | 'config.sectionLogging'
   // Logs
   | 'logs.title' | 'logs.all' | 'logs.error' | 'logs.warn' | 'logs.info' | 'logs.debug'
   | 'logs.search' | 'logs.refresh' | 'logs.clear' | 'logs.export'
   | 'logs.autoScroll' | 'logs.noLogs' | 'logs.timeRange'
   | 'logs.1h' | 'logs.6h' | 'logs.24h' | 'logs.7d' | 'logs.allTime'
   // Migrate
-  | 'migrate.title' | 'migrate.description' | 'migrate.includeConfig' | 'migrate.includeLogs'
-  | 'migrate.includeData' | 'migrate.includeSkills' | 'migrate.startPacking' | 'migrate.packing'
+  | 'migrate.title' | 'migrate.description' | 'migrate.startPacking' | 'migrate.packing'
   | 'migrate.done' | 'migrate.history' | 'migrate.noPackages' | 'migrate.delete'
   | 'migrate.export' | 'migrate.packageOptions'
+  | 'migrate.scanning' | 'migrate.noFiles' | 'migrate.filesUnit' | 'migrate.totalSelected'
+  | 'migrate.catConfig' | 'migrate.catSkills' | 'migrate.catLogs' | 'migrate.catData'
+  | 'migrate.catCache' | 'migrate.catPlugins' | 'migrate.catTemplates' | 'migrate.catBackups'
+  | 'migrate.catMemory' | 'migrate.catAgents' | 'migrate.catOther'
+  | 'migrate.importing' | 'migrate.importSuccess' | 'migrate.importError'
   // Settings
   | 'settings.title' | 'settings.appearance' | 'settings.theme' | 'settings.themeSystem'
   | 'settings.themeLight' | 'settings.themeDark' | 'settings.language' | 'settings.languageEn'
@@ -59,6 +76,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'dashboard.version': 'Version',
     'dashboard.uptime': 'Uptime',
     'dashboard.stop': 'Stop',
+    'dashboard.start': 'Start',
     'dashboard.restart': 'Restart',
     'dashboard.config': 'Config',
     'dashboard.gateway': 'Gateway',
@@ -67,6 +85,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'dashboard.activeSkills': 'Active Skills',
     'dashboard.connected': 'Connected',
     'dashboard.disconnected': 'Disconnected',
+    'dashboard.envCheckFailed': 'Environment Check Failed',
+    'dashboard.envMissing': 'Missing components',
+    'dashboard.goToConfig': 'Go to Config',
     // Config
     'config.title': 'OpenClaw Configuration',
     'config.installCheck': 'Installation Status',
@@ -121,6 +142,46 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'config.envInstalled': 'Installed',
     'config.envMissing': 'Not Installed',
     'config.refreshEnv': 'Refresh Environment',
+    'config.statusRunning': 'Running',
+    'config.statusStopped': 'Stopped',
+    'config.statusStarting': 'Starting...',
+    'config.statusStopping': 'Stopping...',
+    'config.statusUnknown': 'Unknown',
+    'config.startConfigure': 'Configure Now',
+    'config.setupWizard': 'Setup Wizard',
+    'config.setupDesc': 'Configure OpenClaw to get started. You can change these settings later.',
+    'config.stepGateway': 'Gateway',
+    'config.stepProvider': 'AI Provider',
+    'config.stepAdvanced': 'Advanced',
+    'config.stepReview': 'Review',
+    'config.stepGatewayDesc': 'Configure the gateway service connection',
+    'config.stepProviderDesc': 'Set up your AI model provider',
+    'config.stepAdvancedDesc': 'Skills and logging configuration',
+    'config.stepReviewDesc': 'Review and save your configuration',
+    'config.authToken': 'Auth Token',
+    'config.providerType': 'Provider',
+    'config.apiKey': 'API Key',
+    'config.baseUrl': 'Base URL',
+    'config.model': 'Model',
+    'config.skillsDir': 'Skills Directory',
+    'config.autoLoadSkills': 'Auto-load Skills',
+    'config.logLevel': 'Log Level',
+    'config.logFile': 'Log File',
+    'config.providerOpenai': 'OpenAI',
+    'config.providerAnthropic': 'Anthropic',
+    'config.providerAzure': 'Azure OpenAI',
+    'config.providerLocal': 'Local Model',
+    'config.providerCustom': 'Custom',
+    'config.nextStep': 'Next',
+    'config.prevStep': 'Previous',
+    'config.saveAndStart': 'Save & Start Gateway',
+    'config.skipSetup': 'Skip',
+    'config.configPreview': 'Configuration Preview',
+    'config.configSaved': 'Configuration saved successfully',
+    'config.sectionGateway': 'Gateway',
+    'config.sectionProvider': 'AI Provider',
+    'config.sectionSkills': 'Skills',
+    'config.sectionLogging': 'Logging',
     // Logs
     'logs.title': 'Logs',
     'logs.all': 'All',
@@ -143,10 +204,6 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     // Migrate
     'migrate.title': 'Migration',
     'migrate.description': 'Package your OpenClaw installation for migration to another machine.',
-    'migrate.includeConfig': 'Configuration Files',
-    'migrate.includeLogs': 'Log Files',
-    'migrate.includeData': 'Database & Data',
-    'migrate.includeSkills': 'Skills & Plugins',
     'migrate.startPacking': 'Start Packing',
     'migrate.packing': 'Packing...',
     'migrate.done': 'Package Created',
@@ -155,6 +212,24 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'migrate.delete': 'Delete',
     'migrate.export': 'Export',
     'migrate.packageOptions': 'Package Options',
+    'migrate.scanning': 'Scanning files...',
+    'migrate.noFiles': 'No OpenClaw data found at ~/.openclaw/',
+    'migrate.filesUnit': 'files',
+    'migrate.totalSelected': 'Selected total',
+    'migrate.catConfig': 'Configuration Files',
+    'migrate.catSkills': 'Skills & Plugins',
+    'migrate.catLogs': 'Log Files',
+    'migrate.catData': 'Database & Data',
+    'migrate.catCache': 'Cache',
+    'migrate.catPlugins': 'Plugins',
+    'migrate.catTemplates': 'Templates',
+    'migrate.catBackups': 'Backups',
+    'migrate.catMemory': 'User Memory',
+    'migrate.catAgents': 'Sub-Agents',
+    'migrate.catOther': 'Other Data',
+    'migrate.importing': 'Importing...',
+    'migrate.importSuccess': 'Migration imported successfully',
+    'migrate.importError': 'Import failed',
     // Settings
     'settings.title': 'Settings',
     'settings.appearance': 'Appearance',
@@ -200,6 +275,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'dashboard.version': '版本',
     'dashboard.uptime': '运行时间',
     'dashboard.stop': '停止',
+    'dashboard.start': '启动',
     'dashboard.restart': '重启',
     'dashboard.config': '配置',
     'dashboard.gateway': '网关',
@@ -208,6 +284,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'dashboard.activeSkills': '活跃技能',
     'dashboard.connected': '已连接',
     'dashboard.disconnected': '未连接',
+    'dashboard.envCheckFailed': '环境检查未通过',
+    'dashboard.envMissing': '缺失组件',
+    'dashboard.goToConfig': '前往配置',
     // Config
     'config.title': 'OpenClaw 配置',
     'config.installCheck': '安装状态',
@@ -262,6 +341,46 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'config.envInstalled': '已安装',
     'config.envMissing': '未安装',
     'config.refreshEnv': '刷新检测',
+    'config.statusRunning': '运行中',
+    'config.statusStopped': '已停止',
+    'config.statusStarting': '启动中...',
+    'config.statusStopping': '停止中...',
+    'config.statusUnknown': '未知',
+    'config.startConfigure': '开始配置',
+    'config.setupWizard': '配置向导',
+    'config.setupDesc': '配置 OpenClaw 以开始使用，您可以稍后修改这些设置。',
+    'config.stepGateway': '网关设置',
+    'config.stepProvider': 'AI 提供商',
+    'config.stepAdvanced': '高级选项',
+    'config.stepReview': '确认配置',
+    'config.stepGatewayDesc': '配置网关服务连接参数',
+    'config.stepProviderDesc': '设置 AI 模型提供商',
+    'config.stepAdvancedDesc': '技能和日志配置',
+    'config.stepReviewDesc': '检查并保存配置',
+    'config.authToken': '认证令牌',
+    'config.providerType': '提供商',
+    'config.apiKey': 'API 密钥',
+    'config.baseUrl': '接口地址',
+    'config.model': '模型',
+    'config.skillsDir': '技能目录',
+    'config.autoLoadSkills': '自动加载技能',
+    'config.logLevel': '日志级别',
+    'config.logFile': '日志文件',
+    'config.providerOpenai': 'OpenAI',
+    'config.providerAnthropic': 'Anthropic',
+    'config.providerAzure': 'Azure OpenAI',
+    'config.providerLocal': '本地模型',
+    'config.providerCustom': '自定义',
+    'config.nextStep': '下一步',
+    'config.prevStep': '上一步',
+    'config.saveAndStart': '保存并启动网关',
+    'config.skipSetup': '跳过',
+    'config.configPreview': '配置预览',
+    'config.configSaved': '配置已保存',
+    'config.sectionGateway': '网关',
+    'config.sectionProvider': 'AI 提供商',
+    'config.sectionSkills': '技能',
+    'config.sectionLogging': '日志',
     // Logs
     'logs.title': '日志管理',
     'logs.all': '全部',
@@ -284,10 +403,6 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     // Migrate
     'migrate.title': '迁移管理',
     'migrate.description': '打包您的 OpenClaw 安装数据，方便迁移到其他机器。',
-    'migrate.includeConfig': '配置文件',
-    'migrate.includeLogs': '日志文件',
-    'migrate.includeData': '数据库和数据',
-    'migrate.includeSkills': '技能和插件',
     'migrate.startPacking': '开始打包',
     'migrate.packing': '打包中...',
     'migrate.done': '打包完成',
@@ -296,6 +411,24 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     'migrate.delete': '删除',
     'migrate.export': '导出',
     'migrate.packageOptions': '打包选项',
+    'migrate.scanning': '正在扫描文件...',
+    'migrate.noFiles': '未在 ~/.openclaw/ 找到 OpenClaw 数据',
+    'migrate.filesUnit': '个文件',
+    'migrate.totalSelected': '已选总计',
+    'migrate.catConfig': '配置文件',
+    'migrate.catSkills': '技能与插件',
+    'migrate.catLogs': '日志文件',
+    'migrate.catData': '数据库与数据',
+    'migrate.catCache': '缓存',
+    'migrate.catPlugins': '插件',
+    'migrate.catTemplates': '模板',
+    'migrate.catBackups': '备份',
+    'migrate.catMemory': '用户记忆文件',
+    'migrate.catAgents': '子 Agent 配置',
+    'migrate.catOther': '其他数据',
+    'migrate.importing': '导入中...',
+    'migrate.importSuccess': '迁移文件导入成功',
+    'migrate.importError': '导入失败',
     // Settings
     'settings.title': '应用设置',
     'settings.appearance': '外观设置',

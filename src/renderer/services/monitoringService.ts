@@ -9,7 +9,7 @@
  * Gateway port is now configurable via Settings (default: 18789).
  */
 
-import type { SystemStatus, ResourceMetrics } from '@common/types/dashboard';
+import type { SystemStatus, ResourceMetrics, EnvironmentCheckResult } from '@common/types/dashboard';
 
 const GATEWAY_API_TIMEOUT = 3000;
 let appStartTime = Date.now();
@@ -241,12 +241,50 @@ export const dashboardService = {
     return checkGatewayRunning();
   },
 
+  async checkEnvironment(): Promise<EnvironmentCheckResult> {
+    if (isElectronEnvironment()) {
+      return window.electron.dashboard.checkEnvironment();
+    }
+
+    // Web mode: check if gateway is reachable as a proxy for env readiness
+    const running = await checkGatewayRunning();
+    return {
+      ok: running,
+      components: [
+        { name: 'Node.js', installed: true, version: '(web mode)' },
+        { name: 'OpenClaw CLI', installed: running, version: running ? 'unknown' : undefined },
+      ],
+      message: running ? undefined : 'OpenClaw Gateway is not reachable. Please start it manually.',
+    };
+  },
+
+  async startService(): Promise<void> {
+    if (isElectronEnvironment()) {
+      return window.electron.dashboard.startService();
+    }
+
+    // Web mode: no direct way to start, show guidance
+    const base = getGatewayBase();
+    const running = await checkGatewayRunning();
+    if (running) {
+      throw new Error('Gateway is already running');
+    }
+
+    try {
+      await fetchWithTimeout(`${base}/api/v1/start`, GATEWAY_API_TIMEOUT);
+    } catch {
+      console.warn('[Web Mode] Cannot start gateway remotely. Run manually: openclaw gateway start');
+      throw new Error('[Web Mode] Run manually: openclaw gateway start');
+    }
+
+    appStartTime = Date.now();
+  },
+
   async stopService(): Promise<void> {
     if (isElectronEnvironment()) {
       return window.electron.dashboard.stopService();
     }
 
-    // Web mode: attempt to call gateway shutdown endpoint
     const base = getGatewayBase();
     const running = await checkGatewayRunning();
     if (!running) {
@@ -254,10 +292,8 @@ export const dashboardService = {
     }
 
     try {
-      // Attempt graceful shutdown via API
       await fetchWithTimeout(`${base}/api/v1/shutdown`, GATEWAY_API_TIMEOUT);
     } catch {
-      // Even if the endpoint doesn't exist, the gateway may have its own mechanism
       console.warn('[Web Mode] Gateway shutdown endpoint not available. Run manually: openclaw gateway stop');
     }
   },
@@ -267,7 +303,6 @@ export const dashboardService = {
       return window.electron.dashboard.restartService();
     }
 
-    // Web mode: attempt restart via API, otherwise reset uptime
     const base = getGatewayBase();
     const running = await checkGatewayRunning();
 
@@ -279,7 +314,6 @@ export const dashboardService = {
       }
     }
 
-    // Reset local uptime tracking
     appStartTime = Date.now();
   },
 };

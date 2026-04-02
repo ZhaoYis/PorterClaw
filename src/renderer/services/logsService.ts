@@ -1,9 +1,5 @@
-/**
- * Logs Service
- * Provides log data from Gateway API or simulated entries
- */
-
-import type { LogEntry, LogLevel } from '@common/types/logs';
+import type { LogEntry, LogFilter } from '@common/types/logs';
+import { isElectronEnvironment } from './monitoringService';
 
 function getGatewayBase(): string {
   try {
@@ -18,62 +14,13 @@ function getGatewayBase(): string {
   return 'http://localhost:18789';
 }
 
-/**
- * Generate simulated log entries for demo
- */
-function generateSimulatedLogs(): LogEntry[] {
-  const levels: LogLevel[] = ['info', 'info', 'info', 'warn', 'error', 'debug', 'info', 'debug'];
-  const messages = [
-    'Gateway service started on port 18789',
-    'Incoming connection from 192.168.1.100',
-    'Processing skill request: web-search',
-    'Memory usage at 45% (2.3GB / 5.1GB)',
-    'WebSocket connection established',
-    'Health check passed — all subsystems operational',
-    'Rate limit applied: 100 req/min for client abc123',
-    'Warning: Slow response time detected (> 2000ms)',
-    'Error: Failed to connect to upstream model provider',
-    'Debug: Cache hit ratio: 87.3%',
-    'Node node-01 connected successfully',
-    'Skill "code-review" completed in 1.2s',
-    'Configuration reloaded from ~/.openclaw/openclaw.json',
-    'Error: Authentication token expired for client xyz789',
-    'Warning: Disk usage above 80%',
-    'Debug: GC pause: 12ms',
-    'New skill registered: data-analysis v2.1.0',
-    'Gateway port binding successful',
-    'TLS certificate renewed successfully',
-    'Warning: Connection pool approaching limit (95/100)',
-  ];
-
-  const now = Date.now();
-  const entries: LogEntry[] = [];
-
-  for (let i = 0; i < 50; i++) {
-    const timestamp = new Date(now - Math.random() * 24 * 60 * 60 * 1000).toISOString();
-    const level = levels[Math.floor(Math.random() * levels.length)];
-    const message = messages[Math.floor(Math.random() * messages.length)];
-
-    entries.push({
-      id: `log-${i}-${Date.now()}`,
-      timestamp,
-      level,
-      message,
-      source: Math.random() > 0.5 ? 'gateway' : 'node',
-    });
+export async function fetchLogs(filter?: Partial<LogFilter> & { limit?: number; offset?: number }): Promise<LogEntry[]> {
+  if (isElectronEnvironment()) {
+    return window.electron.logs.queryLogs(filter);
   }
 
-  // Sort by timestamp descending (newest first)
-  entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  return entries;
-}
-
-/**
- * Fetch logs from Gateway API
- */
-export async function fetchLogs(): Promise<LogEntry[]> {
+  // Web mode: try Gateway API
   const base = getGatewayBase();
-
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -97,13 +44,22 @@ export async function fetchLogs(): Promise<LogEntry[]> {
     // Gateway not available
   }
 
-  // Fallback: simulated logs
-  return generateSimulatedLogs();
+  return [];
 }
 
-/**
- * Export logs as downloadable file
- */
+export async function clearLogsRemote(): Promise<void> {
+  if (isElectronEnvironment()) {
+    return window.electron.logs.clearLogs();
+  }
+}
+
+export async function exportLogsRemote(filter?: Partial<LogFilter>): Promise<string> {
+  if (isElectronEnvironment()) {
+    return window.electron.logs.exportLogs(filter);
+  }
+  return '';
+}
+
 export function downloadLogs(entries: LogEntry[]): void {
   const content = entries
     .map(

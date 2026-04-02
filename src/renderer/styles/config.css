@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 800px;
+  width: 100%;
 }
 
 .config-page h2 {
@@ -528,4 +528,280 @@
   font-size: 12px;
   color: var(--text-tertiary);
   margin-top: 4px;
+}
+
+/* ========== Setup Wizard ========== */
+
+.wizard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.wizard-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wizard-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.wizard-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.wizard-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  padding: 12px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.wizard-step:hover {
+  background: rgba(0, 102, 255, 0.05);
+}
+
+.wizard-step-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  border: 2px solid var(--border-color);
+  color: var(--text-tertiary);
+  background: var(--card-bg);
+  transition: all 0.2s;
+}
+
+.wizard-step.active .wizard-step-indicator {
+  border-color: #0066FF;
+  background: #0066FF;
+  color: #fff;
+}
+
+.wizard-step.completed .wizard-step-indicator {
+  border-color: #00C853;
+  background: #00C853;
+  color: #fff;
+}
+
+.wizard-step-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.wizard-step.active .wizard-step-label {
+  color: #0066FF;
+}
+
+.wizard-step.completed .wizard-step-label {
+  color: #00C853;
+}
+
+.wizard-step-connector {
+  position: absolute;
+  top: 27px;
+  left: calc(50% + 20px);
+  width: calc(100% - 40px);
+  height: 2px;
+  background: var(--border-color);
+}
+
+.wizard-step.completed .wizard-step-connector {
+  background: #00C853;
+}
+
+.wizard-step:last-child .wizard-step-connector {
+  display: none;
+}
+
+.wizard-content {
+  min-height: 200px;
+}
+
+.wizard-step-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.wizard-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wizard-form-group .config-field {
+  padding: 10px 0;
+}
+
+.wizard-form-group .config-field-input {
+  width: 260px;
+}
+
+.wizard-form-group .config-field-input.wide {
+  width: 360px;
+}
+
+.wizard-form-group .config-field-select {
+  width: 260px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.wizard-form-group .config-field-select:focus {
+  border-color: #0066FF;
+}
+
+.wizard-json-preview {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 320px;
+  overflow-y: auto;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #d4d4d4;
+  border: 1px solid #000;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.wizard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.wizard-actions-left {
+  display: flex;
+  gap: 8px;
+}
+
+.wizard-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.wizard-btn {
+  padding: 8px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wizard-btn:hover:not(:disabled) {
+  border-color: #0066FF;
+  color: #0066FF;
+}
+
+.wizard-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wizard-btn.primary {
+  background: #0066FF;
+  border-color: #0066FF;
+  color: #fff;
+}
+
+.wizard-btn.primary:hover:not(:disabled) {
+  background: #0052cc;
+  border-color: #0052cc;
+}
+
+.wizard-btn.success {
+  background: #00C853;
+  border-color: #00C853;
+  color: #fff;
+}
+
+.wizard-btn.success:hover:not(:disabled) {
+  background: #00a844;
+  border-color: #00a844;
+}
+
+/* Config Editor section groups */
+.config-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-group-title:first-child {
+  margin-top: 0;
+}
+
+/* Post-install configure button */
+.post-install-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(0, 102, 255, 0.08);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  border-radius: 8px;
+}
+
+.post-install-action-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
 }

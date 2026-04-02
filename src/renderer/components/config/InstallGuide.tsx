@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   CheckCircleOutlined,
   LoadingOutlined,
@@ -8,9 +8,10 @@ import {
   BulbOutlined,
   RedoOutlined,
   CodeOutlined,
-  LaptopOutlined
+  LaptopOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
-import { Switch, Spin } from 'antd';
+import { Spin } from 'antd';
 import { useConfigStore } from '../../stores/configStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useTranslation } from '../../i18n/translations';
@@ -26,23 +27,21 @@ export const InstallGuide: React.FC = React.memo(() => {
     isExecuting,
     autoInstallOpenClaw,
     resetInstallState,
-    assessEnvironment
+    assessEnvironment,
+    startSetupWizard,
   } = useConfigStore();
   
   const language = useSettingsStore((s) => s.settings.language);
   const { t } = useTranslation(language);
   
-  const [simulateError, setSimulateError] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll logs
   useEffect(() => {
     if (logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [installLogs]);
 
-  // Assess environment on mount if we're in installer mode
   useEffect(() => {
     if (installStatus !== 'installed' && installStatus !== 'checking') {
       assessEnvironment();
@@ -50,12 +49,12 @@ export const InstallGuide: React.FC = React.memo(() => {
   }, [installStatus, assessEnvironment]);
 
   const handleInstallClick = () => {
-    autoInstallOpenClaw(simulateError);
+    autoInstallOpenClaw();
   };
 
   const handleRetry = () => {
     resetInstallState();
-    autoInstallOpenClaw(simulateError);
+    autoInstallOpenClaw();
   };
 
   // Status indicator logic (Overall Config Component)
@@ -171,14 +170,6 @@ export const InstallGuide: React.FC = React.memo(() => {
               )}
             </div>
 
-            {/* Dev Simulate Error Toggle */}
-            {(installPhase === 'idle' || installPhase === 'error') && (
-              <div className="simulate-error-toggle">
-                <Switch size="small" checked={simulateError} onChange={setSimulateError} />
-                <span>{t('config.simulateError')}</span>
-              </div>
-            )}
-
             {/* Terminal / Logs View */}
             {(installLogs.length > 0 || isExecuting) && (
               <div className="install-log-terminal">
@@ -207,6 +198,17 @@ export const InstallGuide: React.FC = React.memo(() => {
                   <BulbOutlined style={{ marginRight: 6 }} />
                   <strong>{t('config.solution')}:</strong> {installError.solution}
                 </div>
+              </div>
+            )}
+
+            {installPhase === 'success' && (
+              <div className="post-install-action">
+                <span className="post-install-action-text">
+                  {t('config.setupDesc' as any)}
+                </span>
+                <button className="gw-btn start" onClick={startSetupWizard}>
+                  <SettingOutlined /> {t('config.startConfigure' as any)}
+                </button>
               </div>
             )}
 

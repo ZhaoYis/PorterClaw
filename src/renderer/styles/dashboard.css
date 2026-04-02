@@ -56,7 +56,7 @@ body {
 /* Top Navigation Bar */
 .navbar {
   height: 56px;
-  background: #252526;
+  background: var(--card-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -71,7 +71,7 @@ body {
   gap: 10px;
   font-weight: 600;
   font-size: 18px;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .logo-icon {
@@ -105,11 +105,11 @@ body {
 }
 
 .nav-menu li:hover {
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .nav-menu li.active {
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .nav-menu li.active::after {
@@ -135,7 +135,7 @@ body {
 
 /* Status Card */
 .status-card {
-  background: #252526;
+  background: var(--card-bg);
   border-radius: 8px;
   padding: 24px;
   display: flex;
@@ -206,7 +206,7 @@ body {
 .status-label {
   font-size: 24px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .status-meta {
@@ -232,7 +232,7 @@ body {
 .meta-value {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 16px;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -339,7 +339,7 @@ body {
 }
 
 .resource-card {
-  background: #252526;
+  background: var(--card-bg);
   border-radius: 8px;
   padding: 20px;
   display: flex;
@@ -352,7 +352,7 @@ body {
 }
 
 .resource-card:hover {
-  border-color: #333;
+  border-color: var(--border-color);
   transform: translateY(-2px);
 }
 
@@ -383,21 +383,16 @@ body {
   box-shadow: 0 0 8px rgba(255, 189, 46, 0.5);
 }
 
-.resource-dot.yellow {
-  background: #ffbd2e;
-  box-shadow: 0 0 8px rgba(255, 189, 46, 0.5);
-}
-
 .resource-title {
   font-size: 14px;
-  color: #9ca3af;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .resource-value {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 18px;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
   margin-top: 12px;
 }
@@ -410,7 +405,7 @@ body {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: #333;
+  background: var(--border-color);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 12px;
@@ -434,7 +429,7 @@ body {
 .progress-label {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 13px;
-  color: #fff;
+  color: var(--text-primary);
   margin-top: 8px;
 }
 
@@ -444,17 +439,17 @@ body {
 }
 
 .main-content::-webkit-scrollbar-track {
-  background: #1E1E1E;
+  background: var(--bg-primary);
   border-radius: 4px;
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: var(--text-tertiary);
 }
 
 .content-wrapper {
